@@ -107,6 +107,15 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 #space h3{margin:0 0 10px;font-size:15px}
 #space input{width:100%;font:inherit;font-size:12.5px;padding:8px 10px;border:1px solid #d9e1ee;border-radius:8px;background:#f8fafd;color:#4a5876}
 #space .row{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+#export{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
+#export.on{display:flex}
+#export .box{background:#fff;border-radius:14px;padding:20px 22px;width:min(520px,94vw);box-shadow:0 20px 60px rgba(10,20,50,.35);font-size:13px}
+#export h3{margin:0 0 14px;font-size:15px}
+#export .exlist{display:flex;flex-direction:column;gap:8px}
+#export .exlist button{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;line-height:1.5}
+#export .exlist b{display:block;font-size:13.5px;color:#2b58d4}
+#export .exlist small{color:#8b96ab;font-size:11.5px}
+#export .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
 #dropmask{position:fixed;inset:0;background:rgba(14,155,108,.13);border:4px dashed #0e9b6c;display:none;align-items:center;justify-content:center;z-index:50;font-size:20px;color:#0b7a55;font-weight:700;pointer-events:none}
 #dropmask.on{display:flex}
 #help{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
@@ -137,7 +146,7 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <button class="primary" id="bSave">💾 保存</button>
   <button id="bSaveAs">另存为…</button>
   <button id="bHistory">🕘 历史版本</button>
-  <button id="bExport">⬇ 导出</button>
+  <button id="bExport">⬇ 导出…</button>
   <button id="bImport">⬆ 导入</button>
   <button id="bHelp">? 帮助</button>
   <button id="bSpace">👤 <span id="spaceName">空间</span></button>
@@ -192,6 +201,18 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   </div>
 </div></div>
 
+<div id="export"><div class="box">
+  <h3>导出为…</h3>
+  <div class="exlist">
+    <button data-fmt="mmap"><b>.mmap</b><small>本工具原生 · 无损往返（再打开、导回都用它）</small></button>
+    <button data-fmt="md"><b>.md</b><small>Markdown 大纲 · 给人或 AI 读最省事；能导回，备注原样回来</small></button>
+    <button data-fmt="json"><b>.json</b><small>通用 JSON · 内容同 .mmap，给别的程序用</small></button>
+    <button data-fmt="xmind"><b>.xmind</b><small>与 XMind 桌面版互通（颜色、跨分支连线会丢）</small></button>
+    <button data-fmt="html"><b>.html</b><small>单文件离线版 · 自带界面，双击就能看，不需要服务器</small></button>
+  </div>
+  <div class="row"><button class="primary" id="exClose">关闭</button></div>
+</div></div>
+
 <div id="help"><div class="box">
   <h3>操作说明</h3>
   <table>
@@ -213,6 +234,7 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
     <tr><td><b>历史版本</b></td><td>每次「💾 保存」都会留一份快照，编辑中每 3 分钟自动再留一份（每张图最多 30 份）。点「🕘 历史版本」→「恢复」把任意一份放回画布（<b>恢复 ≠ 保存</b>，回画布后还要点「保存」）</td></tr>
     <tr><td>自动保存</td><td>改动只<b>自动存草稿</b>（本地浏览器 + 服务器 <code>draft.json</code>），刷新或崩溃后可「继续上次编辑」；<b>不会覆盖你的文件</b></td></tr>
     <tr><td><b>多用户</b></td><td>左上角「👤 空间」就是你的身份：<b>图/历史/草稿按空间隔离</b>，别人的列表里看不到你的；换设备用「专属链接」进同一空间，共用电脑请点「退出空间」</td></tr>
+    <tr><td><b>导出格式</b></td><td>点「⬇ 导出…」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看、不需要服务器</td></tr>
   </table>
   <div style="margin-top:14px;text-align:right"><button class="primary" id="bHelpClose">知道了</button></div>
 </div></div>
@@ -237,6 +259,7 @@ var curLocalName=null;  // 从本机打开时的原文件名（保存=下载到�
 var dirty=false;        // 有没有还没写进文件的改动
 var lastSnap=0;         // 上次自动快照时间（编辑中每 3 分钟留一份历史）
 var spaceName=null;     // 我的空间名（身份由 cookie 承载，前端只用于显示）
+var offline=false;      // 单文件离线模式（导出的 .html 内嵌了 INITIAL，不连服务器）
 var drag=null,pan=null,lastTap={id:null,t:0},linkFrom=null;
 
 function byId(id){for(var i=0;i<nodes.length;i++)if(nodes[i].id===id)return nodes[i];return null;}
@@ -521,6 +544,7 @@ function save(){
   saveT=setTimeout(function(){
     var json=JSON.stringify(payload());
     try{localStorage.setItem(KEY,json);}catch(_){}
+    if(offline){ setStatus("local"); return; }   // 离线单文件：只存本机，不请求服务器
     try{
       fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:json})
         .then(function(r){ setStatus(r.ok?(dirty?"draft":"saved"):"error"); })
@@ -615,6 +639,13 @@ function newMap(){
   setTimeout(function(){ if(rootId)startEdit(rootId); },60);
 }
 function init(){
+  if(INITIAL){                        // 单文件离线版：数据内嵌，完全不连服务器
+    offline=true; curName=null; curLocalName=null; dirty=false;
+    bootFrom(INITIAL,"local");
+    var nm=document.getElementById("spaceName"); if(nm)nm.textContent="离线";
+    updateTitle();
+    return;
+  }
   var k=(location.search.match(/[?&]k=([A-Za-z0-9]+)/)||[])[1];
   if(k){
     fetch("/api/space",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:k})})
@@ -681,7 +712,8 @@ function openSpace(){
 /* ---------- 文件库 / 保存 / 历史版本 ---------- */
 function updateTitle(){
   var el=document.querySelector("#toolbar .brand small"); if(!el)return;
-  el.textContent=(curName?"文件："+curName:(curLocalName?"本机文件："+curLocalName:"工作台 · 打开即空白 / 可拖入"))+(dirty?" · 未保存":"");
+  var base=offline?"离线单文件 · 改完用 ⬇ 导出保存":(curName?"文件："+curName:(curLocalName?"本机文件："+curLocalName:"工作台 · 打开即空白 / 可拖入"));
+  el.textContent=base+(dirty?" · 未保存":"");
 }
 function toast(msg){
   var t=document.getElementById("toast"); if(!t)return;
@@ -711,8 +743,8 @@ function saveToLocal(name){
   var target=name||baseName()+".mmap";
   var blob=new Blob([JSON.stringify(payload(),null,2)],{type:"application/json"});
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=target;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{document.body.removeChild(a);}catch(_){} URL.revokeObjectURL(a.href); },2000);
   dirty=false; setStatus("saved"); updateTitle();
   toast("已下载到本机："+target+"（浏览器不能直写原文件，用它覆盖即可）");
 }
@@ -722,6 +754,7 @@ function saveAs(){
   saveFileToServer(/\.mmap$/i.test(v)?v:v+".mmap");
 }
 function manualSave(){
+  if(offline){ saveToLocal(baseName()+".mmap"); return; }
   if(curName){ saveFileToServer(curName); return; }
   if(curLocalName){ saveToLocal(curLocalName); return; }
   saveAs();
@@ -774,6 +807,105 @@ document.addEventListener("keydown",function(e){
   if((e.ctrlKey||e.metaKey)&&(e.key==="s"||e.key==="S")){ e.preventDefault(); manualSave(); }
 },true);
 
+/* ---------- 导出（多格式） ---------- */
+function download(name,data,mime){
+  var blob=(data instanceof Blob)?data:new Blob([data],{type:(mime||"text/plain")+";charset=utf-8"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  // 不能点完就移除：文件名要等浏览器登记完下载才生效（否则会存成 “download”）
+  setTimeout(function(){ try{document.body.removeChild(a);}catch(_){} URL.revokeObjectURL(a.href); },2000);
+}
+function treeLines(){
+  var out=[],root=null;
+  nodes.forEach(function(n){ if(n.parent===null&&!root)root=n; });
+  if(!root)return out;
+  var seen={};
+  (function walk(n,level){
+    if(seen[n.id])return; seen[n.id]=1;
+    var pad=new Array(level+1).join("  ");
+    if(level===0){ out.push("# "+n.text); }
+    else { out.push(pad+(n.todo==="done"?"- [x] ":n.todo?"- [ ] ":"- ")+n.text); }
+    if(n.note){
+      var pre=level===0?"":pad+"  ";
+      String(n.note).split("\n").forEach(function(l){ out.push(pre+"> "+l); });
+    }
+    kidsOf(n.id).forEach(function(c){ walk(c,level+1); });
+  })(root,0);
+  return out;
+}
+function toMarkdown(){
+  var lines=treeLines(),links=[];
+  nodes.forEach(function(n){ (n.links||[]).forEach(function(t){ var o=byId(t); if(o)links.push("- "+n.text+" → "+o.text); }); });
+  if(links.length){ lines.push(""); lines.push("## 跨分支连线"); lines.push(""); lines=lines.concat(links); }
+  return lines.join("\n")+"\n";
+}
+var CRC_T=null;
+function crc32(u8){
+  if(!CRC_T){ CRC_T=new Uint32Array(256); for(var i=0;i<256;i++){ var c=i; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); CRC_T[i]=c>>>0; } }
+  var c=0xFFFFFFFF;
+  for(var j=0;j<u8.length;j++) c=CRC_T[(c^u8[j])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function zipStore(entries){          // 只存不压（method 0），XMind 认
+  var enc=new TextEncoder(),parts=[],central=[],off=0;
+  var u16=function(n){return [n&255,(n>>>8)&255];};
+  var u32=function(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];};
+  entries.forEach(function(e){
+    var name=enc.encode(e.name),data=enc.encode(e.text),crc=crc32(data);
+    var h=[].concat([0x50,0x4b,0x03,0x04],u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0));
+    parts.push(new Uint8Array(h),name,data);
+    central.push({name:name,crc:crc,size:data.length,off:off});
+    off+=h.length+name.length+data.length;
+  });
+  var cd=[],cdLen=0;
+  central.forEach(function(c){
+    var h=[].concat([0x50,0x4b,0x01,0x02],u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(c.crc),u32(c.size),u32(c.size),u16(c.name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(c.off));
+    var hb=new Uint8Array(h); cd.push(hb,c.name); cdLen+=h.length+c.name.length;
+  });
+  var eo=new Uint8Array([].concat([0x50,0x4b,0x05,0x06],u16(0),u16(0),u16(central.length),u16(central.length),u32(cdLen),u32(off),u16(0)));
+  return new Blob(parts.concat(cd,[eo]),{type:"application/zip"});
+}
+function toXmind(){
+  var topic=function(n){
+    var t={id:"node-"+n.id,class:"topic",title:String(n.text||"")};
+    if(n.note)t.notes={plain:{content:String(n.note)}};
+    var ch=kidsOf(n.id).map(topic);
+    if(ch.length)t.children={attached:ch};
+    return t;
+  };
+  var root=null; nodes.forEach(function(n){ if(n.parent===null&&!root)root=n; });
+  var content=[{id:"sheet-1",class:"sheet",title:baseName(),rootTopic:root?topic(root):{id:"node-empty",class:"topic",title:"(空)"}}];
+  return zipStore([
+    {name:"content.json",text:JSON.stringify(content)},
+    {name:"metadata.json",text:JSON.stringify({creator:{name:"xima-mindmap",version:"1.0"}})},
+    {name:"manifest.json",text:JSON.stringify({"file-entries":{"content.json":{},"metadata.json":{}}})}
+  ]);
+}
+function toHtml(){
+  var urls=["index.html","/index.html"];
+  var tryFetch=function(i){
+    if(i>=urls.length){ alert("导出 html 失败：取不到页面源码"); return; }
+    fetch(urls[i],{cache:"no-store"}).then(function(r){ if(!r.ok)throw 0; return r.text(); }).then(function(src){
+      var json=JSON.stringify(payload());
+      var out=src.replace(/^var INITIAL=[^\n]*/m, "var INITIAL="+json+";  // 单文件离线版：数据内嵌，不连服务器");
+      download(baseName()+".html",out,"text/html");
+      closeExport(); toast("已导出单文件 HTML（双击即可离线打开）");
+    }).catch(function(){ tryFetch(i+1); });
+  };
+  tryFetch(0);
+}
+function openExport(){ var el=document.getElementById("export"); if(el)el.classList.add("on"); }
+function closeExport(){ var el=document.getElementById("export"); if(el)el.classList.remove("on"); }
+function doExport(fmt){
+  var n=baseName();
+  if(fmt==="mmap"||fmt==="json") download(n+"."+fmt, JSON.stringify(payload(),null,2), "application/json");
+  else if(fmt==="md") download(n+".md", toMarkdown(), "text/markdown");
+  else if(fmt==="xmind") download(n+".xmind", toXmind(), "application/zip");
+  else if(fmt==="html"){ toHtml(); return; }
+  else return;
+  closeExport(); toast("已导出 "+n+"."+fmt);
+}
+
 /* ---------- 导入 ---------- */
 function mdToTree(text){
   // 支持两种写法：# 标题分层，或纯缩进/列表大纲；标题下的列表项自动作为它的子节点
@@ -783,6 +915,8 @@ function mdToTree(text){
     var m=raw.match(/^(\s*)(.*)$/);
     var lead=m[1].replace(/\t/g,"    ").length;
     var body=m[2];
+    var q=body.match(/^\s*>\s?(.*)$/);            // 「> 备注」行 → 归到上一个节点当备注
+    if(q){ if(stack.length>1){ var ln=stack[stack.length-1].node; ln.note=((ln.note||"")+(ln.note?"\n":"")+q[1]); } return; }
     var h=body.match(/^(#{1,6})\s+(.*)$/);
     var t,indent;
     if(h){ hl=h[1].length; t=h[2].replace(/\s+$/,""); indent=(hl-1)*2; }
@@ -976,7 +1110,12 @@ $("bSave").onclick=function(){manualSave();};
 $("bSaveAs").onclick=saveAs;
 $("bHistory").onclick=toggleHistory;
 document.getElementById("histClose").onclick=closeHistory;
-$("bExport").onclick=function(){ saveToLocal(baseName()+".mmap"); };
+$("bExport").onclick=openExport;
+document.getElementById("exClose").onclick=closeExport;
+document.getElementById("export").onclick=function(e){ if(e.target===this)closeExport(); };
+Array.prototype.forEach.call(document.querySelectorAll("#export .exlist button"),function(b){
+  b.onclick=function(){ doExport(b.getAttribute("data-fmt")); };
+});
 $("bSpace").onclick=openSpace;
 document.getElementById("spClose").onclick=function(){document.getElementById("space").classList.remove("on");};
 document.getElementById("spCopy").onclick=function(){
