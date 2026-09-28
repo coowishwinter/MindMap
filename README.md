@@ -26,6 +26,17 @@ docker compose restart        # 让新代码生效（改了 server.mjs 必须重
 ```
 
 > ⚠️ 改 `index.html` 只需刷新浏览器；改 `server.mjs` **必须重启容器**才生效。
+> ℹ️ 本目录属主是 uid 1000（容器跑这个身份），用 root 执行 git 会报 `dubious ownership` —— 已在 `/root/.gitconfig` 登记 `safe.directory`，直接 `git pull` 即可；换别的账号执行时加一句 `git -c safe.directory="$(pwd)" pull`。
+
+## 改代码的流程
+
+源码仓库（私有）：`http://192.168.31.10:8888/cocow/xima-mindmap`
+
+1. 在 Agent 工作区 `项目/建站流水线/geo-mindmap/` 改（那是同一个仓库的克隆）
+2. `git push origin master`
+3. NAS 上：`cd /volume2/docker/AA-my/xima-mindmap && git pull && docker compose restart`
+
+> 部署目录也是同一仓库的克隆，所以两边内容一致；**运行数据 `spaces/` 只在部署目录里**（已 .gitignore，不会被 git 覆盖）。
 
 ## 目录结构
 
