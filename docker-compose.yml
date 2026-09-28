@@ -1,0 +1,20 @@
+# 思维导图工作台 · Docker Compose 部署
+#
+# 目录：/volume2/docker/AA-my/xima-mindmap
+# 起停：docker compose up -d   /   docker compose down
+# 说明：本目录即容器里的 /app —— 代码和运行数据（spaces/）都在这一个目录里
+services:
+  mindmap:
+    image: node:24-slim
+    container_name: xima-mindmap
+    restart: unless-stopped
+    user: "1000:1000"
+    working_dir: /app
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8099"
+    ports:
+      - "8100:8099"        # 宿主 8100 → 容器 8099
+    volumes:
+      - ./:/app            # 本目录挂进容器 /app
+    command: node server.mjs

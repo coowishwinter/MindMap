@@ -1,0 +1,14 @@
+# 运行数据（不入库）
+spaces/
+draft.json
+map-data.json
+maps/
+history/
+
+# 旧的单文件快照，留档但不入库
+犀码互联·思维导图.html
+
+# 系统噪音
+@eaDir/
+*.log
+*.tmp
