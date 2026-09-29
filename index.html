@@ -143,11 +143,10 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <span class="spacer"></span>
   <button id="bRelayout">⤢ 重排</button>
   <button id="bFit">⤡ 适应</button>
-  <button class="primary" id="bSave">💾 保存</button>
-  <button id="bSaveAs">另存为…</button>
+  <button class="primary" id="bSave">💾 云端保存</button>
   <button id="bHistory">🕘 历史版本</button>
-  <button id="bExport">⬇ 导出…</button>
-  <button id="bImport">⬆ 导入</button>
+  <button id="bExport">⬇ 导出到本地</button>
+  <button id="bImport">⬆ 本地导入</button>
   <button id="bHelp">? 帮助</button>
   <button id="bSpace">👤 <span id="spaceName">空间</span></button>
   <span id="savestate" style="font-size:11.5px;color:#8b96ab;white-space:nowrap;padding:0 6px"></span>
@@ -202,7 +201,7 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 </div></div>
 
 <div id="export"><div class="box">
-  <h3>导出为…</h3>
+  <h3>导出到本地…</h3>
   <div class="exlist">
     <button data-fmt="mmap"><b>.mmap</b><small>本工具原生 · 无损往返（再打开、导回都用它）</small></button>
     <button data-fmt="md"><b>.md</b><small>Markdown 大纲 · 给人或 AI 读最省事；能导回，备注原样回来</small></button>
@@ -229,12 +228,12 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
     <tr><td>平移 / 缩放</td><td>空白处拖动 / 滚轮（或右下角 ＋－）</td></tr>
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
     <tr><td><b>打开 / 拖入</b></td><td>把 <code>.xmind</code> / <code>.md</code> / <code>.json</code> / <code>.html</code> <b>拖进窗口</b>松手，或点「📂 打开文件」</td></tr>
-    <tr><td>导入</td><td>支持 <code>.xmind</code> / Markdown 大纲 <code>.md</code> / 本工具导出的 <code>.json</code> / 单文件 <code>.html</code></td></tr>
-    <tr><td><b>保存</b></td><td><kbd>Ctrl</kbd>+<kbd>S</kbd> 或点「💾 保存」。<b>存到哪儿，取决于从哪儿打开</b>：从服务器文件库打开 → 写回 <code>maps/&lt;名称&gt;.mmap</code>；新建/未命名 → 先问你文件名，再存服务器；从本机拖入/打开的文件 → 浏览器不允许网页直写本机原文件，会<b>下载同名 .mmap 到下载目录</b>，自己覆盖原文件即可</td></tr>
-    <tr><td><b>历史版本</b></td><td>每次「💾 保存」都会留一份快照，编辑中每 3 分钟自动再留一份（每张图最多 30 份）。点「🕘 历史版本」→「恢复」把任意一份放回画布（<b>恢复 ≠ 保存</b>，回画布后还要点「保存」）</td></tr>
+    <tr><td><b>本地导入</b></td><td>点「⬆ 本地导入」，或把 <code>.xmind</code> / Markdown 大纲 <code>.md</code> / 本工具导出的 <code>.json</code> / 单文件 <code>.html</code> 拖进窗口</td></tr>
+    <tr><td><b>云端保存</b></td><td><kbd>Ctrl</kbd>+<kbd>S</kbd> 或点「💾 云端保存」。<b>存到哪儿，取决于从哪儿打开</b>：从服务器文件库打开 → 写回 <code>maps/&lt;名称&gt;.mmap</code>；新建/未命名 → 先问你文件名，再存服务器；从本机拖入/打开的文件 → 浏览器不允许网页直写本机原文件，会<b>下载同名 .mmap 到下载目录</b>，自己覆盖原文件即可</td></tr>
+    <tr><td><b>历史版本</b></td><td>每次「💾 云端保存」都会留一份快照，编辑中每 3 分钟自动再留一份（每张图最多 30 份）。点「🕘 历史版本」→「恢复」把任意一份放回画布（<b>恢复 ≠ 保存</b>，回画布后还要点「保存」）</td></tr>
     <tr><td>自动保存</td><td>改动只<b>自动存草稿</b>（本地浏览器 + 服务器 <code>draft.json</code>），刷新或崩溃后可「继续上次编辑」；<b>不会覆盖你的文件</b></td></tr>
     <tr><td><b>多用户</b></td><td>左上角「👤 空间」就是你的身份：<b>图/历史/草稿按空间隔离</b>，别人的列表里看不到你的；换设备用「专属链接」进同一空间，共用电脑请点「退出空间」</td></tr>
-    <tr><td><b>导出格式</b></td><td>点「⬇ 导出…」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看、不需要服务器</td></tr>
+    <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看、不需要服务器</td></tr>
   </table>
   <div style="margin-top:14px;text-align:right"><button class="primary" id="bHelpClose">知道了</button></div>
 </div></div>
@@ -712,7 +711,7 @@ function openSpace(){
 /* ---------- 文件库 / 保存 / 历史版本 ---------- */
 function updateTitle(){
   var el=document.querySelector("#toolbar .brand small"); if(!el)return;
-  var base=offline?"离线单文件 · 改完用 ⬇ 导出保存":(curName?"文件："+curName:(curLocalName?"本机文件："+curLocalName:"工作台 · 打开即空白 / 可拖入"));
+  var base=offline?"离线单文件 · 改完用 ⬇ 导出到本地保存":(curName?"文件："+curName:(curLocalName?"本机文件："+curLocalName:"工作台 · 打开即空白 / 可拖入"));
   el.textContent=base+(dirty?" · 未保存":"");
 }
 function toast(msg){
@@ -771,7 +770,7 @@ function openHistory(){
   var name=curName||null;
   el.classList.add("on");
   t.textContent="历史版本 · "+(name||"未命名图（未保存过）");
-  if(!name){ list.innerHTML='<div class="empty">这张图还没存成文件，没有历史版本。<br>先点「💾 保存」给它起个名字。</div>'; return; }
+  if(!name){ list.innerHTML='<div class="empty">这张图还没存成文件，没有历史版本。<br>先点「💾 云端保存」给它起个名字。</div>'; return; }
   list.innerHTML='<div class="empty">加载中…</div>';
   fetch("/api/history?name="+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(j){
     var items=(j&&j.items)||[];
@@ -792,7 +791,7 @@ function openHistory(){
           .then(function(d){
             save(); bootFrom(d,"server",curName);
             dirty=true; setStatus("dirty"); updateTitle(); closeHistory();
-            toast("已恢复到画布（还没写进文件，点「💾 保存」确认）");
+            toast("已恢复到画布（还没写进文件，点「💾 云端保存」确认）");
           })
           .catch(function(e){ alert("恢复失败："+e.message); });
       };
@@ -1107,7 +1106,6 @@ function zoomBy(k){
   view.x=cw-(cw-view.x)*kk;view.y=ch-(ch-view.y)*kk;view.s=ns;applyView();
 }
 $("bSave").onclick=function(){manualSave();};
-$("bSaveAs").onclick=saveAs;
 $("bHistory").onclick=toggleHistory;
 document.getElementById("histClose").onclick=closeHistory;
 $("bExport").onclick=openExport;
