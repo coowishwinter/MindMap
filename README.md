@@ -38,6 +38,13 @@ docker compose restart        # 让新代码生效（改了 server.mjs 必须重
 
 > 部署目录也是同一仓库的克隆，所以两边内容一致；**运行数据 `spaces/` 只在部署目录里**（已 .gitignore，不会被 git 覆盖）。
 
+### GitHub 镜像（2026-11-20 起）
+
+- 仓库：<https://github.com/coowishwinter/MindMap>（**公开**，main 分支）
+- 认证：Deploy Key `.secrets/github_mindmap_deploy`（已勾 Allow write access）；远端名 `github`
+- 推送：`GIT_SSH_COMMAND="ssh -i $HOME/.openclaw/workspace/.secrets/github_mindmap_deploy -o IdentitiesOnly=yes" git push github master:main`
+- 原有 Vite/React 脚手架保留在 `initial-scaffold` 分支
+
 ## 目录结构
 
 ```
