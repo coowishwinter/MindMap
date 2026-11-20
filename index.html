@@ -38,8 +38,18 @@ canvas.linking,#canvas.linking{cursor:crosshair}
  color:#3b6bd6;font-size:13px;line-height:16px;text-align:center;cursor:pointer;display:none;z-index:2;user-select:none}
 .node .add{right:-9px;top:50%;margin-top:-9px}
 .node .tgl{left:-9px;top:50%;margin-top:-9px;color:#7b879c}
-.node:hover>.add,.node:hover>.tgl,.node.sel>.add,.node.sel>.tgl{display:block}
+.node:hover>.add,.node:hover>.tgl,.node.sel>.add,.node.sel>.tgl,.node.collapsed>.tgl{display:block}
+.node.collapsed>.tgl{color:#2b58d4;border-color:#9bb7f0;background:#f2f6ff}
 .node.root .add,.node.root .tgl{color:#22304d;border-color:#8fa0c0}
+.node.root.collapsed>.tgl{background:#eef3ff}
+.node .col-cnt{position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);
+ padding:1px 6px;border-radius:10px;background:#eef3ff;border:1px solid #c5d6fa;color:#2b58d4;
+ font-size:11px;font-weight:600;line-height:16px;white-space:nowrap;cursor:pointer;z-index:2;
+ box-shadow:0 1px 3px rgba(43,88,212,.14);transition:left .12s ease}
+.node .col-cnt:hover{background:#2b58d4;color:#fff;border-color:#2b58d4}
+.node:hover>.col-cnt,.node.sel>.col-cnt{left:calc(100% + 13px)}
+.node.root .col-cnt{background:#22304d;color:#fff;border-color:#8fa0c0}
+.node.root .col-cnt:hover{background:#2b58d4;border-color:#2b58d4}
 .node .label{display:block;outline:none;border-radius:4px}
 .node .label:focus{background:rgba(43,88,212,.10)}
 .node .mk{position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
@@ -52,6 +62,23 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 #hint{position:fixed;left:12px;bottom:10px;font-size:11.5px;color:#8b96ab;z-index:20;pointer-events:none;max-width:66vw;line-height:1.7}
 #zoombar{position:fixed;right:12px;bottom:12px;display:flex;gap:6px;z-index:20}
 #zoombar button{width:34px;padding:6px 0;text-align:center}
+#levelbar{position:fixed;top:64px;left:12px;z-index:18;display:none;align-items:center;gap:4px;flex-wrap:wrap;
+ max-width:calc(100vw - 24px);padding:5px 8px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+ border:1px solid #e4e9f2;border-radius:11px;box-shadow:0 4px 16px rgba(24,36,66,.08)}
+#levelbar .lb-lbl{font-size:11.5px;color:#6b7a94;font-weight:600;padding:0 3px;white-space:nowrap}
+#levelbar button{font-size:12px;padding:3px 8px;border-radius:7px}
+#levelbar button.act{background:#2b58d4;border-color:#2b58d4;color:#fff;font-weight:600}
+#levelbar .lb-sep{width:1px;height:16px;background:#e4e9f2;margin:0 2px}
+#levelbar .lb-stat{font-size:11px;color:#8b96ab;padding:0 4px;white-space:nowrap}
+#levelbar .lb-stat.has-col{color:#2b58d4;font-weight:600}
+#ctxmenu{position:fixed;z-index:55;min-width:200px;max-width:265px;background:#fff;border:1px solid #e4e9f2;
+ border-radius:11px;box-shadow:0 12px 32px rgba(20,30,60,.16);padding:5px;display:none}
+#ctxmenu button{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;
+ border:0;background:transparent;padding:7px 10px;border-radius:7px;font-size:12.5px;color:#33405c;gap:10px}
+#ctxmenu button:hover{background:#f2f6ff;color:#2b58d4}
+#ctxmenu button.danger:hover{background:#fff1f0;color:#d94a44}
+#ctxmenu button kbd{font-size:10.5px;color:#8b96ab;background:#f4f6fb;border-color:#e4e9f2}
+#ctxmenu .sep{height:1px;background:#eef2f8;margin:4px 6px}
 #notes{position:fixed;top:54px;right:0;bottom:0;width:340px;max-width:88vw;background:#fff;border-left:1px solid #e4e9f2;
  box-shadow:-8px 0 24px rgba(20,30,60,.08);transform:translateX(105%);transition:transform .18s ease;z-index:25;display:flex;flex-direction:column}
 #notes.on{transform:none}
@@ -152,6 +179,8 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 <div id="canvas"><svg id="edges"><g id="edgeLayer"></g><g id="links"></g></svg><div id="nodes"></div></div>
 <div id="hint">空白拖动＝平移 · 滚轮＝缩放 · 拖节点＝移动 · <b>拖到另一节点身上＝换上级</b> · 双击＝改名 · <kbd>Tab</kbd> 子节点 · <kbd>Enter</kbd> 同级 · <kbd>N</kbd> 备注 · <kbd>L</kbd> 连线（改动自动保存）</div>
 <div id="zoombar"><button id="bZout">－</button><button id="bZin">＋</button></div>
+<div id="levelbar"></div>
+<div id="ctxmenu"></div>
 <div id="start"><div class="sb">
   <h2>思维导图工作台</h2>
   <p class="sub">空白画布。新建一张，或把你的图拖进来。</p>
@@ -222,7 +251,8 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
     <tr><td><b>标记颜色</b></td><td>选中后按 <kbd>1</kbd>~<kbd>4</kbd>，或点工具栏色点；<kbd>0</kbd> 清除</td></tr>
     <tr><td><b>待办</b></td><td><kbd>T</kbd> 循环：无 → 待办 ☐ → 进行中 ◐ → 完成 ☑（完成后文字加删除线）</td></tr>
     <tr><td><b>跨分支连线</b></td><td><kbd>L</kbd> 或点「🔗 连线」进入连线模式 → 点目标节点即连上；<b>点虚线可删除</b>；<kbd>Esc</kbd> 退出</td></tr>
-    <tr><td>折叠/展开</td><td>点节点左侧的小圆点</td></tr>
+    <tr><td>折叠/展开</td><td>点节点左侧小圆点或右侧计数徽章，或选中后按 <kbd>Space</kbd>；<b>右键节点</b>可对该分支按层级折叠</td></tr>
+    <tr><td><b>一键按层级折叠</b></td><td>使用画布左上角「折叠子集」栏一键折叠指定层级的所有子集（或 <kbd>Alt</kbd>+<kbd>0</kbd>~<kbd>9</kbd>，<kbd>Alt</kbd>+<kbd>A</kbd> 全部展开）</td></tr>
     <tr><td>平移 / 缩放</td><td>空白处拖动 / 滚轮（或右下角 ＋－）</td></tr>
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
     <tr><td><b>打开 / 拖入</b></td><td>把 <code>.xmind</code> / <code>.md</code> / <code>.json</code> / <code>.html</code> <b>拖进窗口</b>松手，或点「📂 打开文件」</td></tr>
@@ -259,8 +289,17 @@ var drag=null,pan=null,lastTap={id:null,t:0},linkFrom=null;
 
 function byId(id){for(var i=0;i<nodes.length;i++)if(nodes[i].id===id)return nodes[i];return null;}
 function kidsOf(id){return nodes.filter(function(n){return n.parent===id;});}
-function isVis(n){var p=n.parent;while(p){var pn=byId(p);if(!pn||pn.collapsed)return false;p=pn.parent;}return true;}
-function subIds(n){var out=[n.id];if(!n.collapsed)kidsOf(n.id).forEach(function(c){out=out.concat(subIds(c));});return out;}
+function isVis(n){var p=n.parent,seen={};while(p&&!seen[p]){seen[p]=1;var pn=byId(p);if(!pn||pn.collapsed)return false;p=pn.parent;}return !p;}
+function subIds(n){
+  var out=[],seen={},q=[n];
+  while(q.length){
+    var cur=q.shift();
+    if(!cur||seen[cur.id])continue;
+    seen[cur.id]=1;out.push(cur.id);
+    kidsOf(cur.id).forEach(function(c){q.push(c);});
+  }
+  return out;
+}
 function fresh(n){
   return {id:n.id,text:n.text,parent:n.parent===undefined?null:n.parent,depth:n.depth||0,
     color:n.color||"#2b58d4",collapsed:!!n.collapsed,x:n.x||0,y:n.y||0,
@@ -276,20 +315,22 @@ function build(node,parentId,depth,color){
 
 var HGAP=64,VGAP=14;
 function layoutAll(){
+  var r=byId(rootId);if(!r)return;
   var vis=nodes.filter(isVis);if(!vis.length)return;
   var maxD=0;vis.forEach(function(n){if(n.depth>maxD)maxD=n.depth;});
   var colW=[],d;
   for(d=0;d<=maxD;d++){var m=0;vis.forEach(function(n){if(n.depth===d&&n.w>m)m=n.w;});colW[d]=m;}
   var colX=[0];for(d=1;d<=maxD;d++)colX[d]=colX[d-1]+colW[d-1]+HGAP;
-  var cursor=0;
+  var cursor=0,seen={};
   (function walk(n){
+    if(!n||seen[n.id])return;seen[n.id]=1;
     n.x=colX[n.depth];
     var kids=n.collapsed?[]:kidsOf(n.id).filter(isVis);
     if(!kids.length){n.y=cursor;cursor+=n.h+VGAP;}
     else{kids.forEach(walk);var a=kids[0],b=kids[kids.length-1];n.y=(a.y+b.y+b.h)/2-n.h/2;}
-  })(byId(rootId));
-  var r=byId(rootId),cy=r.y+r.h/2;
-  nodes.forEach(function(n){n.y-=cy;});
+  })(r);
+  var cy=r.y+r.h/2;
+  vis.forEach(function(n){n.y-=cy;});
 }
 
 function render(){
@@ -297,8 +338,9 @@ function render(){
   var vis=nodes.filter(isVis);
   vis.forEach(function(n){n._el=null;n._path=null;});
   vis.forEach(function(n){
+    var kids=kidsOf(n.id),isCol=!!(n.collapsed&&kids.length);
     var d=document.createElement("div");
-    d.className="node"+(n.id===rootId?" root":"")+(n.id===sel?" sel":"")+(n.todo==="done"?" done":"");
+    d.className="node"+(n.id===rootId?" root":"")+(n.id===sel?" sel":"")+(n.todo==="done"?" done":"")+(isCol?" collapsed":"");
     d.setAttribute("data-id",n.id);
     if(n.id!==rootId)d.style.borderLeftColor=n.color;
     if(n.todo){var t=document.createElement("span");t.className="td";t.textContent=TODOICON[n.todo];d.appendChild(t);}
@@ -306,7 +348,15 @@ function render(){
     if(n.mark){var mk=document.createElement("i");mk.className="mk";mk.style.background=n.mark;d.appendChild(mk);}
     if(n.note){var nt=document.createElement("i");nt.className="nt";nt.textContent="\u2261";nt.title=n.note.slice(0,200);d.appendChild(nt);}
     var add=document.createElement("div");add.className="add";add.textContent="\uFF0B";add.title="添加子节点";d.appendChild(add);
-    if(kidsOf(n.id).length){var tg=document.createElement("div");tg.className="tgl";tg.textContent=n.collapsed?"\uFF0B":"\uFF0D";tg.title="折叠 / 展开";d.appendChild(tg);}
+    if(kids.length){
+      var tg=document.createElement("div");tg.className="tgl";tg.textContent=n.collapsed?"\uFF0B":"\uFF0D";tg.title=n.collapsed?"展开子节点":"折叠子节点";d.appendChild(tg);
+      if(isCol){
+        var cnt=subIds(n).length-1;
+        var cb=document.createElement("div");cb.className="col-cnt";cb.textContent="\u25B8"+cnt;
+        cb.title="已折叠 "+cnt+" 个子孙节点，点击展开";
+        d.appendChild(cb);
+      }
+    }
     nodesEl.appendChild(d);n._el=d;
   });
   vis.forEach(function(n){n.w=n._el.offsetWidth;n.h=n._el.offsetHeight;});
@@ -319,6 +369,7 @@ function render(){
   });
   drawLinks();
   place();drawEdges();applyView();
+  updateLevelBar();
 }
 function place(){nodes.forEach(function(n){if(n._el){n._el.style.left=n.x+"px";n._el.style.top=n.y+"px";}});}
 function drawEdges(){
@@ -485,10 +536,143 @@ function del(id){
   if(linkFrom&&sub.indexOf(linkFrom)>=0)exitLink();
   sel=null;render();save();
 }
-function toggle(id){var n=byId(id);if(!n)return;n.collapsed=!n.collapsed;render();save();}
+function ensureVisibleSel(){
+  if(!sel)return;
+  var cur=byId(sel),seen={};
+  while(cur&&!isVis(cur)&&cur.parent&&!seen[cur.id]){seen[cur.id]=1;cur=byId(cur.parent);}
+  setSel(cur&&isVis(cur)?cur.id:null);
+}
+function toggle(id){
+  var n=byId(id);if(!n||!kidsOf(id).length)return;
+  var oldX=n.x,oldY=n.y;
+  n.collapsed=!n.collapsed;
+  ensureVisibleSel();
+  render();layoutAll();place();drawEdges();drawLinks();
+  view.x+=(oldX-n.x)*view.s;view.y+=(oldY-n.y)*view.s;applyView();
+  paintSwatches();save();
+}
+function getSubtreeMaxDepth(startId){
+  var start=byId(startId||rootId);if(!start)return 0;
+  var maxD=start.depth,seen={},q=[start];
+  while(q.length){
+    var cur=q.shift();
+    if(!cur||seen[cur.id])continue;seen[cur.id]=1;
+    if(cur.depth>maxD)maxD=cur.depth;
+    kidsOf(cur.id).forEach(function(k){q.push(k);});
+  }
+  return maxD;
+}
+function collapseToLevel(level,scopeId){
+  if(!rootId||!nodes.length)return;
+  recomputeDepth();
+  var isBranch=scopeId&&scopeId!==rootId;
+  var scopeNode=isBranch?byId(scopeId):null;
+  var targets=scopeNode?subIds(scopeNode).map(byId).filter(Boolean):nodes;
+  var oldX=scopeNode?scopeNode.x:0,oldY=scopeNode?scopeNode.y:0;
+  targets.forEach(function(n){
+    var hasKids=kidsOf(n.id).length>0;
+    if(n.depth<level)n.collapsed=false;
+    else if(n.depth===level)n.collapsed=hasKids;
+  });
+  ensureVisibleSel();
+  render();layoutAll();place();drawEdges();drawLinks();
+  if(scopeNode){
+    view.x+=(oldX-scopeNode.x)*view.s;view.y+=(oldY-scopeNode.y)*view.s;applyView();
+  }else{
+    fit();
+  }
+  paintSwatches();save();
+  toast((scopeNode?"已在「"+scopeNode.text+"」下":"已")+"折叠 "+(level===0?"中心节点":level+" 级节点")+"的所有子集");
+}
+function collapseBranchDeep(id){
+  var n=byId(id);if(!n||!kidsOf(id).length)return;
+  var oldX=n.x,oldY=n.y;
+  subIds(n).forEach(function(sid){
+    var s=byId(sid);if(s&&kidsOf(sid).length)s.collapsed=true;
+  });
+  ensureVisibleSel();
+  render();layoutAll();place();drawEdges();drawLinks();
+  view.x+=(oldX-n.x)*view.s;view.y+=(oldY-n.y)*view.s;applyView();
+  paintSwatches();save();
+  toast("已逐层折叠「"+n.text+"」的全部子集");
+}
+function expandAll(scopeId){
+  if(!rootId||!nodes.length)return;
+  var isBranch=scopeId&&scopeId!==rootId;
+  var scopeNode=isBranch?byId(scopeId):null;
+  var targets=scopeNode?subIds(scopeNode).map(byId).filter(Boolean):nodes;
+  var oldX=scopeNode?scopeNode.x:0,oldY=scopeNode?scopeNode.y:0;
+  targets.forEach(function(n){n.collapsed=false;});
+  render();layoutAll();place();drawEdges();drawLinks();
+  if(scopeNode){
+    view.x+=(oldX-scopeNode.x)*view.s;view.y+=(oldY-scopeNode.y)*view.s;applyView();
+  }else{
+    fit();
+  }
+  paintSwatches();save();
+  toast(scopeNode?"已展开「"+scopeNode.text+"」全部节点":"已展开全部层级");
+}
+function updateLevelBar(){
+  var bar=document.getElementById("levelbar");if(!bar)return;
+  if(!rootId||!nodes.length){bar.style.display="none";return;}
+  var maxD=getSubtreeMaxDepth(rootId);
+  if(maxD<1){bar.style.display="none";return;}
+  var hasParentAt={},anyCollapsed=false,visCount=0;
+  nodes.forEach(function(n){
+    if(isVis(n))visCount++;
+    if(kidsOf(n.id).length){
+      hasParentAt[n.depth]=true;
+      if(n.collapsed)anyCollapsed=true;
+    }
+  });
+  var levels=[];
+  for(var d=0;d<maxD;d++){if(hasParentAt[d])levels.push(d);}
+  if(!levels.length){bar.style.display="none";return;}
+  var isLevelState=function(lv){
+    if(!hasParentAt[lv])return false;
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i];
+      if(!kidsOf(n.id).length)continue;
+      if(n.depth<lv&&n.collapsed)return false;
+      if(n.depth===lv&&!n.collapsed)return false;
+    }
+    return true;
+  };
+  bar.innerHTML="";
+  bar.style.display="flex";
+  var lbl=document.createElement("span");lbl.className="lb-lbl";lbl.textContent="折叠子集:";bar.appendChild(lbl);
+  levels.forEach(function(lv){
+    var b=document.createElement("button");
+    b.textContent=lv===0?"0级(中心)":lv+"级";
+    b.title=lv===0?"一键折叠中心节点的所有子集（仅保留中心主题） · Alt+0":"一键折叠所有 "+lv+" 级节点的子集（保留显示到 "+lv+" 级）"+(lv<=9?" · Alt+"+lv:"");
+    if(isLevelState(lv))b.className="act";
+    b.onclick=function(){collapseToLevel(lv);};
+    bar.appendChild(b);
+  });
+  var sep=document.createElement("span");sep.className="lb-sep";bar.appendChild(sep);
+  var eb=document.createElement("button");
+  eb.textContent="全部展开";
+  eb.title="一键展开全部层级的所有节点 · Alt+A";
+  if(!anyCollapsed)eb.className="act";
+  eb.onclick=function(){expandAll();};
+  bar.appendChild(eb);
+  var st=document.createElement("span");
+  st.className="lb-stat"+(visCount<nodes.length?" has-col":"");
+  st.textContent=visCount+"/"+nodes.length;
+  st.title="当前显示节点数 / 总节点数";
+  bar.appendChild(st);
+}
 
 /* ---------- 更换上级 ---------- */
-function recomputeDepth(){ (function walk(n,d){ n.depth=d; kidsOf(n.id).forEach(function(k){walk(k,d+1);}); })(byId(rootId),0); }
+function recomputeDepth(){
+  var r=byId(rootId);if(!r)return;
+  var seen={};
+  (function walk(n,d){
+    if(!n||seen[n.id])return;seen[n.id]=1;
+    n.depth=d;
+    kidsOf(n.id).forEach(function(k){walk(k,d+1);});
+  })(r,0);
+}
 function reassignColors(){
   function paint(n,c){ n.color=c; kidsOf(n.id).forEach(function(k){paint(k,c);}); }
   kidsOf(rootId).forEach(function(c,i){ paint(c,PALETTE[i%PALETTE.length]); });
@@ -569,6 +753,7 @@ function loadData(d){
   seq=mx+1;
   var r=null;nodes.forEach(function(n){if(n.parent===null)r=n;});
   rootId=r?r.id:(nodes[0]&&nodes[0].id);
+  recomputeDepth();
 }
 var savedDoc=null;
 function needsLayout(){ return nodes.every(function(n){return !n.x&&!n.y;}); }
@@ -988,9 +1173,54 @@ document.addEventListener("drop",function(e){
 });
 
 /* ---------- 交互 ---------- */
+var ctxMenu=document.getElementById("ctxmenu");
+function closeCtxMenu(){if(ctxMenu)ctxMenu.style.display="none";}
+function openCtxMenu(id,x,y){
+  var n=byId(id);if(!n||!ctxMenu)return;
+  setSel(id);paintSwatches();
+  ctxMenu.innerHTML="";
+  var addBtn=function(label,shortcut,fn,cls){
+    var b=document.createElement("button");if(cls)b.className=cls;
+    var sp=document.createElement("span");sp.textContent=label;b.appendChild(sp);
+    if(shortcut){var k=document.createElement("kbd");k.textContent=shortcut;b.appendChild(k);}
+    b.onclick=function(){closeCtxMenu();fn();};
+    ctxMenu.appendChild(b);
+  };
+  var addSep=function(){var s=document.createElement("div");s.className="sep";ctxMenu.appendChild(s);};
+  var kids=kidsOf(id);
+  if(kids.length){
+    addBtn(n.collapsed?"展开当前节点":"折叠当前节点","Space",function(){toggle(id);});
+    addBtn("逐层折叠全部分支子集","",function(){collapseBranchDeep(id);});
+    var subMaxD=getSubtreeMaxDepth(id);
+    if(subMaxD>n.depth+1){
+      var hasLevelKids={};
+      subIds(n).forEach(function(sid){var sn=byId(sid);if(sn&&kidsOf(sid).length)hasLevelKids[sn.depth]=true;});
+      for(var d=n.depth+1;d<subMaxD;d++){
+        if(!hasLevelKids[d])continue;
+        (function(lv){
+          addBtn("折叠此分支 "+lv+"级 子集","",function(){collapseToLevel(lv,id);});
+        })(d);
+      }
+    }
+    addBtn("展开此分支全部节点","",function(){expandAll(id);});
+    addSep();
+  }
+  addBtn("添加子节点","Tab",function(){addChild(id);});
+  if(n.parent!==null)addBtn("添加同级节点","Enter",function(){addSibling(id);});
+  addBtn("改名","F2",function(){startEdit(id);});
+  addBtn("备注","N",function(){openNotes();});
+  if(n.parent!==null){addSep();addBtn("删除节点","Del",function(){del(id);},"danger");}
+  ctxMenu.style.display="block";
+  var mw=ctxMenu.offsetWidth||210,mh=ctxMenu.offsetHeight||220;
+  ctxMenu.style.left=Math.min(x,window.innerWidth-mw-8)+"px";
+  ctxMenu.style.top=Math.min(y,window.innerHeight-mh-8)+"px";
+}
+document.addEventListener("pointerdown",function(e){
+  if(ctxMenu&&ctxMenu.style.display==="block"&&!e.target.closest("#ctxmenu"))closeCtxMenu();
+});
 canvas.addEventListener("pointerdown",function(e){
   if(e.button!==0&&e.pointerType==="mouse")return;
-  if(e.target.closest(".add")||e.target.closest(".tgl"))return;
+  if(e.target.closest(".add")||e.target.closest(".tgl")||e.target.closest(".col-cnt"))return;
   var nodeEl=e.target.closest(".node");
   if(nodeEl){
     var id=nodeEl.getAttribute("data-id");
@@ -1047,6 +1277,13 @@ nodesEl.addEventListener("click",function(e){
   if(a){addChild(a.parentNode.getAttribute("data-id"));return;}
   var t=e.target.closest(".tgl");
   if(t){toggle(t.parentNode.getAttribute("data-id"));return;}
+  var c=e.target.closest(".col-cnt");
+  if(c){toggle(c.parentNode.getAttribute("data-id"));return;}
+});
+nodesEl.addEventListener("contextmenu",function(e){
+  var nodeEl=e.target.closest(".node");if(!nodeEl)return;
+  e.preventDefault();
+  openCtxMenu(nodeEl.getAttribute("data-id"),e.clientX,e.clientY);
 });
 linkLayer.addEventListener("click",function(e){
   var hit=e.target.closest(".hit"); if(!hit)return;
@@ -1055,6 +1292,7 @@ linkLayer.addEventListener("click",function(e){
 });
 canvas.addEventListener("wheel",function(e){
   e.preventDefault();
+  closeCtxMenu();
   var rect=canvas.getBoundingClientRect();
   var mx=e.clientX-rect.left,my=e.clientY-rect.top;
   var ns=Math.min(2.5,Math.max(0.15,view.s*Math.exp(-e.deltaY*0.0015)));
@@ -1063,12 +1301,22 @@ canvas.addEventListener("wheel",function(e){
 },{passive:false});
 document.addEventListener("keydown",function(e){
   if(e.key==="Escape"){
+    closeCtxMenu();
     if(e.target===notesArea){notesArea.blur();closeNotes();return;}
     exitLink();closeNotes();return;
   }
-  if(e.target&&(e.target.isContentEditable||e.target===notesArea))return;
+  if(e.target&&(e.target.isContentEditable||e.target===notesArea||e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
+  if(e.altKey&&!e.ctrlKey&&!e.metaKey&&nodes.length){
+    if(e.key>="0"&&e.key<="9"){
+      var lv=parseInt(e.key,10);
+      if(lv<getSubtreeMaxDepth(rootId)){e.preventDefault();collapseToLevel(lv);}
+      return;
+    }
+    if(e.key==="a"||e.key==="A"){e.preventDefault();expandAll();return;}
+  }
   if(!sel)return;
-  if(e.key==="Tab"){e.preventDefault();addChild(sel);}
+  if(e.key===" "){e.preventDefault();toggle(sel);}
+  else if(e.key==="Tab"){e.preventDefault();addChild(sel);}
   else if(e.key==="Enter"){e.preventDefault();addSibling(sel);}
   else if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();del(sel);}
   else if(e.key==="F2"){e.preventDefault();startEdit(sel);}
