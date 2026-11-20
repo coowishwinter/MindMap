@@ -1,0 +1,6 @@
+{
+  "name": "思维导图",
+  "description": "功能完备的 AI 协作思维导图系统：支持树形自动布局、多图卡、节点折叠、节点拖拽、快捷键、双向同步实时协作、分享链接、导出与模板市场。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

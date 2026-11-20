@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique
+  username      String            @unique
+  passwordHash  String
+  avatarUrl     String?
+  createdAt     DateTime          @default(now())
+  ownedMaps     Map[]             @relation("OwnerMaps")
+  collaborators MapCollaborator[]
+  refreshTokens RefreshToken[]
+  ops           OpLog[]
+  templates     Template[]
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Map {
+  id            Int               @id @default(autoincrement())
+  ownerId       Int
+  title         String            @default("未命名导图")
+  description   String?
+  coverUrl      String?
+  isPublic      Boolean           @default(false)
+  version       Int               @default(0)
+  lastEditedAt  DateTime          @updatedAt
+  createdAt     DateTime          @default(now())
+  owner         User              @relation("OwnerMaps", fields: [ownerId], references: [id], onDelete: Cascade)
+  nodes         MapNode[]
+  collaborators MapCollaborator[]
+  shareLinks    ShareLink[]
+  ops           OpLog[]
+  template      Template?
+
+  @@index([ownerId])
+}
+
+model MapNode {
+  id        Int     @id @default(autoincrement())
+  mapId     Int
+  nodeKey   String
+  parentKey String?
+  text      String  @default("")
+  note      String?
+  styleJson String? // JSON string: {"color":"#f00","icon":"🚀","fontSize":16}
+  collapsed Boolean @default(false)
+  sortOrder Int     @default(0)
+  map       Map     @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
+  @@unique([mapId, nodeKey])
+  @@index([mapId, parentKey])
+}
+
+model MapCollaborator {
+  id     Int    @id @default(autoincrement())
+  mapId  Int
+  userId Int
+  role   String @default("editor") // owner | editor | viewer
+  map    Map    @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mapId, userId])
+}
+
+model ShareLink {
+  id         Int       @id @default(autoincrement())
+  mapId      Int
+  token      String    @unique
+  permission String    @default("view") // view | edit
+  expiresAt  DateTime?
+  visitCount Int       @default(0)
+  createdAt  DateTime  @default(now())
+  map        Map       @relation(fields: [mapId], references: [id], onDelete: Cascade)
+}
+
+model TemplateCategory {
+  id        Int        @id @default(autoincrement())
+  name      String
+  slug      String     @unique
+  sortOrder Int        @default(0)
+  templates Template[]
+}
+
+model Template {
+  id            Int              @id @default(autoincrement())
+  mapId         Int              @unique
+  categoryId    Int
+  title         String
+  description   String?
+  coverUrl      String?
+  isPremium     Boolean          @default(false)
+  downloadCount Int              @default(0)
+  createdAt     DateTime         @default(now())
+  createdBy     Int
+  map           Map              @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  category      TemplateCategory @relation(fields: [categoryId], references: [id])
+  creator       User             @relation(fields: [createdBy], references: [id])
+}
+
+model OpLog {
+  id         Int      @id @default(autoincrement())
+  mapId      Int
+  userId     Int
+  opType     String
+  clientOpId String
+  payload    String // JSON string
+  createdAt  DateTime @default(now())
+  map        Map      @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([mapId, clientOpId])
+  @@index([mapId, id])
+}
