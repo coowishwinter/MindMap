@@ -33,29 +33,34 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 .node.root{background:#22304d;color:#fff;border-color:#22304d;font-size:15px;font-weight:700;padding:12px 18px;border-radius:13px;max-width:320px;width:max-content}
 .node.sel{box-shadow:0 0 0 2px #2b58d4,0 6px 18px rgba(43,88,212,.25);z-index:80}
 .node:hover{z-index:90}
+.node.editing{cursor:text;user-select:text;-webkit-user-select:text;z-index:95;box-shadow:0 0 0 2px #2b58d4,0 8px 22px rgba(43,88,212,.22)}
 .node.drop{box-shadow:0 0 0 3px #0e9b6c,0 8px 22px rgba(14,155,108,.3)}
 .node.linkto{box-shadow:0 0 0 3px #e0772f,0 8px 22px rgba(224,119,47,.3)}
-.node .add{position:absolute;top:-11px;right:12px;height:19px;padding:0 7px;border-radius:99px;
- background:#0e9b6c;border:1px solid #0b845b;color:#fff;font-size:11px;font-weight:600;line-height:17px;
- text-align:center;cursor:pointer;display:none;z-index:3;user-select:none;white-space:nowrap;
- box-shadow:0 2px 6px rgba(14,155,108,.28)}
-.node .add:hover{background:#0b845b}
-.node .tgl{position:absolute;right:-10px;top:50%;margin-top:-10px;width:20px;height:20px;border-radius:50%;
- background:#fff;border:1.5px solid #b6c5e0;color:#4a5876;font-size:13px;font-weight:700;line-height:17px;
- text-align:center;cursor:pointer;display:none;z-index:3;user-select:none;
- box-shadow:0 1px 4px rgba(24,36,66,.12)}
-.node .tgl:hover{background:#eef3ff;border-color:#2b58d4;color:#2b58d4}
-.node:hover>.add,.node:hover>.tgl,.node.sel>.add,.node.sel>.tgl{display:block}
-.node.root .tgl{color:#22304d;border-color:#8fa0c0}
-.node .col-cnt{position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);
- padding:1px 7px;height:20px;border-radius:99px;background:#eef3ff;border:1.5px solid #9bb7f0;color:#2b58d4;
- font-size:11px;font-weight:700;line-height:16px;white-space:nowrap;cursor:pointer;z-index:3;
- box-shadow:0 2px 6px rgba(43,88,212,.16)}
-.node .col-cnt:hover{background:#2b58d4;color:#fff;border-color:#2b58d4}
-.node.root .col-cnt{background:#22304d;color:#fff;border-color:#8fa0c0}
-.node.root .col-cnt:hover{background:#2b58d4;border-color:#2b58d4}
+.node .node-acts{position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);
+ display:flex;align-items:center;z-index:4;user-select:none;
+ background:#fff;border:1px solid #d9e1ee;border-radius:99px;box-shadow:0 2px 8px rgba(24,36,66,.12);
+ opacity:0;pointer-events:none;transition:opacity .12s ease}
+.node .node-acts::before{content:"";position:absolute;left:-10px;top:-6px;right:-4px;bottom:-6px;z-index:-1}
+.node:hover>.node-acts,.node.sel>.node-acts,.node.collapsed>.node-acts{opacity:1;pointer-events:auto}
+.node.editing>.node-acts{opacity:0;pointer-events:none}
+.node .node-acts>div{display:flex;align-items:center;justify-content:center;height:21px;cursor:pointer;
+ font-size:12px;font-weight:700;white-space:nowrap;transition:background .12s,color .12s}
+.node .node-acts .tgl{min-width:22px;padding:0 5px;color:#4a5876;border-radius:99px 0 0 99px}
+.node .node-acts .tgl:hover{background:#eef3ff;color:#2b58d4}
+.node .node-acts .col-cnt{padding:0 7px;color:#2b58d4;background:#eef3ff;font-size:11px;border-radius:99px}
+.node .node-acts .col-cnt:hover{background:#2b58d4;color:#fff}
+.node.root .node-acts .col-cnt{background:#22304d;color:#fff}
+.node.root .node-acts .col-cnt:hover{background:#2b58d4}
+.node .node-acts .add{min-width:22px;padding:0 6px;color:#0e9b6c;border-radius:0 99px 99px 0;
+ border-left:1px solid #e4e9f2}
+.node .node-acts .add:hover{background:#0e9b6c;color:#fff}
+.node .node-acts.leaf .add{border-left:0;border-radius:99px}
+.node.collapsed .node-acts .add{display:none}
+.node.collapsed:hover .node-acts .add,.node.collapsed.sel .node-acts .add{display:flex}
+.node.collapsed:hover .node-acts .col-cnt,.node.collapsed.sel .node-acts .col-cnt{border-radius:99px 0 0 99px}
 .node .label{display:block;outline:none;border-radius:4px}
-.node .label:focus{background:rgba(43,88,212,.10)}
+.node.editing .label{cursor:text;user-select:text;-webkit-user-select:text}
+.node .label:focus{background:rgba(43,88,212,.08)}
 .node .mk{position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 .node .nt{position:absolute;right:6px;bottom:2px;font-size:10px;color:#a9b4c8;letter-spacing:-1px}
 .node.root .nt{color:#93a4c4}
@@ -248,8 +253,8 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <table>
     <tr><td>移动节点</td><td>按住节点拖动（子节点一起动）</td></tr>
     <tr><td><b>更换上级</b></td><td>把节点<b>拖到另一个节点身上</b>松手 → 连整棵子树改挂到它下面；悬停时目标亮<b style="color:#0e9b6c">绿框</b>。不能拖到自己子孙上</td></tr>
-    <tr><td>加子节点 / 同级</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点右上角绿色 <b>＋子</b></td></tr>
-    <tr><td>改名</td><td>双击文字，或 <kbd>F2</kbd>；<kbd>Enter</kbd> 确认</td></tr>
+    <tr><td>加子节点 / 同级</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点右侧绿色 <b>＋</b></td></tr>
+    <tr><td>改名 / 编辑文本</td><td>双击节点进入全选编辑；<b>单击文本</b>切入光标输入位置，<b>拖拽或双击词组</b>可局部选取内容；<kbd>Enter</kbd> 确认</td></tr>
     <tr><td>删除</td><td>选中后 <kbd>Del</kbd>（含子节点，会先确认）</td></tr>
     <tr><td><b>备注</b></td><td><kbd>N</kbd> 或点「📝 备注」→ 右侧面板写细节；节点右下出现 <b>≡</b> 表示有备注</td></tr>
     <tr><td><b>标记颜色</b></td><td>选中后按 <kbd>1</kbd>~<kbd>4</kbd>，或点工具栏色点；<kbd>0</kbd> 清除</td></tr>
@@ -352,17 +357,19 @@ function render(){
     var label=document.createElement("span");label.className="label";label.textContent=n.text;d.appendChild(label);
     if(n.mark){var mk=document.createElement("i");mk.className="mk";mk.style.background=n.mark;d.appendChild(mk);}
     if(n.note){var nt=document.createElement("i");nt.className="nt";nt.textContent="\u2261";nt.title=n.note.slice(0,200);d.appendChild(nt);}
-    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B \u5B50";add.title="添加子节点 (Tab)";d.appendChild(add);
+    var acts=document.createElement("div");acts.className="node-acts"+(kids.length?"":" leaf");
     if(kids.length){
       if(isCol){
         var cnt=subIds(n).length-1;
         var cb=document.createElement("div");cb.className="col-cnt";cb.textContent="\u25B8 "+cnt;
         cb.title=stepExpand?"已折叠 "+cnt+" 个子孙节点，点击仅展开此节点（子节点保持折叠）":"已折叠 "+cnt+" 个子孙节点，点击展开";
-        d.appendChild(cb);
+        acts.appendChild(cb);
       }else{
-        var tg=document.createElement("div");tg.className="tgl";tg.textContent="\u2212";tg.title="折叠子节点 (Space)";d.appendChild(tg);
+        var tg=document.createElement("div");tg.className="tgl";tg.textContent="\u2212";tg.title="折叠子节点 (Space)";acts.appendChild(tg);
       }
     }
+    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B";add.title="添加子节点 (Tab)";acts.appendChild(add);
+    d.appendChild(acts);
     nodesEl.appendChild(d);n._el=d;
   });
   vis.forEach(function(n){n.w=n._el.offsetWidth;n.h=n._el.offsetHeight;});
@@ -501,21 +508,26 @@ function removeLink(fromId,toId){
 function startEdit(id){
   var n=byId(id);if(!n||!n._el)return;
   var label=n._el.querySelector(".label");
+  if(!label||label.isContentEditable)return;
+  n._el.classList.add("editing");
   label.contentEditable="true";label.focus();
   try{var r=document.createRange();r.selectNodeContents(label);var s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}
+  var onKey=function(e){
+    e.stopPropagation();
+    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();label.blur();}
+    else if(e.key==="Escape"){e.preventDefault();label.textContent=n.text;label.blur();}
+  };
   var done=function(){
+    label.removeEventListener("keydown",onKey);
     label.contentEditable="false";
+    if(n._el)n._el.classList.remove("editing");
     var t=(label.textContent||"").replace(/^\s+|\s+$/g,"");
     n.text=t||"新节点";label.textContent=n.text;
     n.w=n._el.offsetWidth;n.h=n._el.offsetHeight;
     place();drawEdges();drawLinks();save();syncNotePanel();
   };
   label.addEventListener("blur",done,{once:true});
-  label.addEventListener("keydown",function(e){
-    e.stopPropagation();
-    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();label.blur();}
-    else if(e.key==="Escape"){e.preventDefault();label.textContent=n.text;label.blur();}
-  });
+  label.addEventListener("keydown",onKey);
 }
 function addChild(pid){
   var p=byId(pid);if(!p)return;
@@ -1251,7 +1263,14 @@ document.addEventListener("pointerdown",function(e){
 });
 canvas.addEventListener("pointerdown",function(e){
   if(e.button!==0&&e.pointerType==="mouse")return;
-  if(e.target.closest(".add")||e.target.closest(".tgl")||e.target.closest(".col-cnt"))return;
+  if(e.target.closest(".node-acts")||e.target.closest(".add")||e.target.closest(".tgl")||e.target.closest(".col-cnt"))return;
+  if(e.target.isContentEditable||e.target.closest('[contenteditable="true"]'))return;
+  var editingEl=e.target.closest(".node.editing");
+  if(editingEl){
+    var lbl=editingEl.querySelector(".label");
+    if(lbl){e.preventDefault();lbl.focus();}
+    return;
+  }
   var nodeEl=e.target.closest(".node");
   if(nodeEl){
     var id=nodeEl.getAttribute("data-id");
@@ -1300,16 +1319,19 @@ function endPointer(e){
 canvas.addEventListener("pointerup",endPointer);
 canvas.addEventListener("pointercancel",function(e){drag=null;pan=null;canvas.classList.remove("pan");});
 canvas.addEventListener("dblclick",function(e){
+  if(e.target.isContentEditable||e.target.closest(".node.editing")||e.target.closest(".node-acts"))return;
   var nodeEl=e.target.closest(".node");if(!nodeEl)return;
   startEdit(nodeEl.getAttribute("data-id"));
 });
 nodesEl.addEventListener("click",function(e){
+  var nodeEl=e.target.closest(".node");if(!nodeEl)return;
+  var id=nodeEl.getAttribute("data-id");
   var a=e.target.closest(".add");
-  if(a){addChild(a.parentNode.getAttribute("data-id"));return;}
+  if(a){addChild(id);return;}
   var t=e.target.closest(".tgl");
-  if(t){toggle(t.parentNode.getAttribute("data-id"));return;}
+  if(t){toggle(id);return;}
   var c=e.target.closest(".col-cnt");
-  if(c){toggle(c.parentNode.getAttribute("data-id"));return;}
+  if(c){toggle(id);return;}
 });
 nodesEl.addEventListener("contextmenu",function(e){
   var nodeEl=e.target.closest(".node");if(!nodeEl)return;
