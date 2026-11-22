@@ -1,0 +1,12 @@
+{
+  "name": "xima-mindmap",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "HOST=0.0.0.0 PORT=${PORT:-3000} node server.mjs",
+    "start": "HOST=0.0.0.0 PORT=${PORT:-3000} node server.mjs",
+    "build": "node --check server.mjs",
+    "lint": "node --check server.mjs"
+  }
+}

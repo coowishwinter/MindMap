@@ -31,23 +31,27 @@ canvas.linking,#canvas.linking{cursor:crosshair}
  border:1px solid #e3e9f4;border-left:4px solid #888;box-shadow:0 1px 2px rgba(24,36,66,.07);
  font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;cursor:grab;user-select:none}
 .node.root{background:#22304d;color:#fff;border-color:#22304d;font-size:15px;font-weight:700;padding:12px 18px;border-radius:13px;max-width:320px;width:max-content}
-.node.sel{box-shadow:0 0 0 2px #2b58d4,0 6px 18px rgba(43,88,212,.25)}
+.node.sel{box-shadow:0 0 0 2px #2b58d4,0 6px 18px rgba(43,88,212,.25);z-index:80}
+.node:hover{z-index:90}
 .node.drop{box-shadow:0 0 0 3px #0e9b6c,0 8px 22px rgba(14,155,108,.3)}
 .node.linkto{box-shadow:0 0 0 3px #e0772f,0 8px 22px rgba(224,119,47,.3)}
-.node .add,.node .tgl{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid #c8d4e8;
- color:#3b6bd6;font-size:13px;line-height:16px;text-align:center;cursor:pointer;display:none;z-index:2;user-select:none}
-.node .add{right:-9px;top:50%;margin-top:-9px}
-.node .tgl{left:-9px;top:50%;margin-top:-9px;color:#7b879c}
-.node:hover>.add,.node:hover>.tgl,.node.sel>.add,.node.sel>.tgl,.node.collapsed>.tgl{display:block}
-.node.collapsed>.tgl{color:#2b58d4;border-color:#9bb7f0;background:#f2f6ff}
-.node.root .add,.node.root .tgl{color:#22304d;border-color:#8fa0c0}
-.node.root.collapsed>.tgl{background:#eef3ff}
-.node .col-cnt{position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);
- padding:1px 6px;border-radius:10px;background:#eef3ff;border:1px solid #c5d6fa;color:#2b58d4;
- font-size:11px;font-weight:600;line-height:16px;white-space:nowrap;cursor:pointer;z-index:2;
- box-shadow:0 1px 3px rgba(43,88,212,.14);transition:left .12s ease}
+.node .add{position:absolute;top:-11px;right:12px;height:19px;padding:0 7px;border-radius:99px;
+ background:#0e9b6c;border:1px solid #0b845b;color:#fff;font-size:11px;font-weight:600;line-height:17px;
+ text-align:center;cursor:pointer;display:none;z-index:3;user-select:none;white-space:nowrap;
+ box-shadow:0 2px 6px rgba(14,155,108,.28)}
+.node .add:hover{background:#0b845b}
+.node .tgl{position:absolute;right:-10px;top:50%;margin-top:-10px;width:20px;height:20px;border-radius:50%;
+ background:#fff;border:1.5px solid #b6c5e0;color:#4a5876;font-size:13px;font-weight:700;line-height:17px;
+ text-align:center;cursor:pointer;display:none;z-index:3;user-select:none;
+ box-shadow:0 1px 4px rgba(24,36,66,.12)}
+.node .tgl:hover{background:#eef3ff;border-color:#2b58d4;color:#2b58d4}
+.node:hover>.add,.node:hover>.tgl,.node.sel>.add,.node.sel>.tgl{display:block}
+.node.root .tgl{color:#22304d;border-color:#8fa0c0}
+.node .col-cnt{position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);
+ padding:1px 7px;height:20px;border-radius:99px;background:#eef3ff;border:1.5px solid #9bb7f0;color:#2b58d4;
+ font-size:11px;font-weight:700;line-height:16px;white-space:nowrap;cursor:pointer;z-index:3;
+ box-shadow:0 2px 6px rgba(43,88,212,.16)}
 .node .col-cnt:hover{background:#2b58d4;color:#fff;border-color:#2b58d4}
-.node:hover>.col-cnt,.node.sel>.col-cnt{left:calc(100% + 13px)}
 .node.root .col-cnt{background:#22304d;color:#fff;border-color:#8fa0c0}
 .node.root .col-cnt:hover{background:#2b58d4;border-color:#2b58d4}
 .node .label{display:block;outline:none;border-radius:4px}
@@ -244,14 +248,14 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <table>
     <tr><td>移动节点</td><td>按住节点拖动（子节点一起动）</td></tr>
     <tr><td><b>更换上级</b></td><td>把节点<b>拖到另一个节点身上</b>松手 → 连整棵子树改挂到它下面；悬停时目标亮<b style="color:#0e9b6c">绿框</b>。不能拖到自己子孙上</td></tr>
-    <tr><td>加子节点 / 同级</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点右侧的 <b>＋</b></td></tr>
+    <tr><td>加子节点 / 同级</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点右上角绿色 <b>＋子</b></td></tr>
     <tr><td>改名</td><td>双击文字，或 <kbd>F2</kbd>；<kbd>Enter</kbd> 确认</td></tr>
     <tr><td>删除</td><td>选中后 <kbd>Del</kbd>（含子节点，会先确认）</td></tr>
     <tr><td><b>备注</b></td><td><kbd>N</kbd> 或点「📝 备注」→ 右侧面板写细节；节点右下出现 <b>≡</b> 表示有备注</td></tr>
     <tr><td><b>标记颜色</b></td><td>选中后按 <kbd>1</kbd>~<kbd>4</kbd>，或点工具栏色点；<kbd>0</kbd> 清除</td></tr>
     <tr><td><b>待办</b></td><td><kbd>T</kbd> 循环：无 → 待办 ☐ → 进行中 ◐ → 完成 ☑（完成后文字加删除线）</td></tr>
     <tr><td><b>跨分支连线</b></td><td><kbd>L</kbd> 或点「🔗 连线」进入连线模式 → 点目标节点即连上；<b>点虚线可删除</b>；<kbd>Esc</kbd> 退出</td></tr>
-    <tr><td>折叠/展开</td><td>点节点左侧小圆点或右侧计数徽章，或选中后按 <kbd>Space</kbd>；<b>右键节点</b>可对该分支按层级折叠</td></tr>
+    <tr><td>折叠/展开</td><td>点节点右侧 <b>－</b> 或蓝色 <b>▸数字</b> 徽章（或按 <kbd>Space</kbd>）；开启「逐层展开」后只展开该节点，子节点保持折叠；<b>右键节点</b>可选择展开方式</td></tr>
     <tr><td><b>一键按层级折叠</b></td><td>使用画布左上角「折叠子集」栏一键折叠指定层级的所有子集（或 <kbd>Alt</kbd>+<kbd>0</kbd>~<kbd>9</kbd>，<kbd>Alt</kbd>+<kbd>A</kbd> 全部展开）</td></tr>
     <tr><td>平移 / 缩放</td><td>空白处拖动 / 滚轮（或右下角 ＋－）</td></tr>
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
@@ -286,6 +290,7 @@ var lastSnap=0;         // 上次自动快照时间（编辑中每 3 分钟留�
 var spaceName=null;     // 我的空间名（身份由 cookie 承载，前端只用于显示）
 var offline=false;      // 单文件离线模式（导出的 .html 内嵌了 INITIAL，不连服务器）
 var drag=null,pan=null,lastTap={id:null,t:0},linkFrom=null;
+var stepExpand=(function(){try{var v=localStorage.getItem("xima-step-expand");return v===null?true:v==="1";}catch(_){return true;}})();
 
 function byId(id){for(var i=0;i<nodes.length;i++)if(nodes[i].id===id)return nodes[i];return null;}
 function kidsOf(id){return nodes.filter(function(n){return n.parent===id;});}
@@ -347,14 +352,15 @@ function render(){
     var label=document.createElement("span");label.className="label";label.textContent=n.text;d.appendChild(label);
     if(n.mark){var mk=document.createElement("i");mk.className="mk";mk.style.background=n.mark;d.appendChild(mk);}
     if(n.note){var nt=document.createElement("i");nt.className="nt";nt.textContent="\u2261";nt.title=n.note.slice(0,200);d.appendChild(nt);}
-    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B";add.title="添加子节点";d.appendChild(add);
+    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B \u5B50";add.title="添加子节点 (Tab)";d.appendChild(add);
     if(kids.length){
-      var tg=document.createElement("div");tg.className="tgl";tg.textContent=n.collapsed?"\uFF0B":"\uFF0D";tg.title=n.collapsed?"展开子节点":"折叠子节点";d.appendChild(tg);
       if(isCol){
         var cnt=subIds(n).length-1;
-        var cb=document.createElement("div");cb.className="col-cnt";cb.textContent="\u25B8"+cnt;
-        cb.title="已折叠 "+cnt+" 个子孙节点，点击展开";
+        var cb=document.createElement("div");cb.className="col-cnt";cb.textContent="\u25B8 "+cnt;
+        cb.title=stepExpand?"已折叠 "+cnt+" 个子孙节点，点击仅展开此节点（子节点保持折叠）":"已折叠 "+cnt+" 个子孙节点，点击展开";
         d.appendChild(cb);
+      }else{
+        var tg=document.createElement("div");tg.className="tgl";tg.textContent="\u2212";tg.title="折叠子节点 (Space)";d.appendChild(tg);
       }
     }
     nodesEl.appendChild(d);n._el=d;
@@ -542,10 +548,19 @@ function ensureVisibleSel(){
   while(cur&&!isVis(cur)&&cur.parent&&!seen[cur.id]){seen[cur.id]=1;cur=byId(cur.parent);}
   setSel(cur&&isVis(cur)?cur.id:null);
 }
-function toggle(id){
+function toggle(id,shallowOnly){
   var n=byId(id);if(!n||!kidsOf(id).length)return;
   var oldX=n.x,oldY=n.y;
-  n.collapsed=!n.collapsed;
+  var wasCollapsed=!!n.collapsed;
+  n.collapsed=!wasCollapsed;
+  if(wasCollapsed){
+    var shallow=(shallowOnly!==undefined)?shallowOnly:stepExpand;
+    if(shallow){
+      kidsOf(id).forEach(function(c){
+        if(kidsOf(c.id).length)c.collapsed=true;
+      });
+    }
+  }
   ensureVisibleSel();
   render();layoutAll();place();drawEdges();drawLinks();
   view.x+=(oldX-n.x)*view.s;view.y+=(oldY-n.y)*view.s;applyView();
@@ -656,6 +671,17 @@ function updateLevelBar(){
   if(!anyCollapsed)eb.className="act";
   eb.onclick=function(){expandAll();};
   bar.appendChild(eb);
+  var sb=document.createElement("button");
+  sb.textContent=stepExpand?"✓ 逐层展开":"逐层展开";
+  if(stepExpand)sb.className="on";
+  sb.title="开启后，点击单个折叠节点时仅展开该节点本身，其子节点保持折叠（可再手动逐个展开）";
+  sb.onclick=function(){
+    stepExpand=!stepExpand;
+    try{localStorage.setItem("xima-step-expand",stepExpand?"1":"0");}catch(_){}
+    render();
+    toast(stepExpand?"已开启「逐层展开」：点节点仅展开下一层，子节点保持折叠":"已关闭「逐层展开」：点节点将恢复子节点原状态");
+  };
+  bar.appendChild(sb);
   var st=document.createElement("span");
   st.className="lb-stat"+(visCount<nodes.length?" has-col":"");
   st.textContent=visCount+"/"+nodes.length;
@@ -1189,7 +1215,12 @@ function openCtxMenu(id,x,y){
   var addSep=function(){var s=document.createElement("div");s.className="sep";ctxMenu.appendChild(s);};
   var kids=kidsOf(id);
   if(kids.length){
-    addBtn(n.collapsed?"展开当前节点":"折叠当前节点","Space",function(){toggle(id);});
+    if(n.collapsed){
+      addBtn("仅展开此节点（子节点不展开）",stepExpand?"Space":"",function(){toggle(id,true);});
+      addBtn("展开此节点（保留原折叠状态）",stepExpand?"":"Space",function(){toggle(id,false);});
+    }else{
+      addBtn("折叠当前节点","Space",function(){toggle(id);});
+    }
     addBtn("逐层折叠全部分支子集","",function(){collapseBranchDeep(id);});
     var subMaxD=getSubtreeMaxDepth(id);
     if(subMaxD>n.depth+1){

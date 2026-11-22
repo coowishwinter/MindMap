@@ -38,8 +38,14 @@ const INDEX = path.join(SPACES, 'index.json');
 const COOKIE = 'mm_space';
 const EXT = '.mmap';
 const SNAP_MAX = 30;
-const PORT = Number(process.env.PORT || 8099);
-const HOST = process.env.HOST || '127.0.0.1';
+function argVal(flag){
+  const i=process.argv.indexOf(flag);
+  if(i>=0&&i+1<process.argv.length)return process.argv[i+1];
+  const eq=process.argv.find((a)=>a.startsWith(flag+'='));
+  return eq?eq.slice(flag.length+1):null;
+}
+const PORT = Number(argVal('--port') || process.env.PORT || 8099);
+const HOST = argVal('--host') || process.env.HOST || '127.0.0.1';
 
 // 静态服务黑名单：数据目录绝不允许被直接下载
 const BLOCKED = /^\/(spaces|maps|history|draft\.json|map-data\.json)(\/|$)/;
@@ -78,8 +84,12 @@ async function resolveSpace(req) {
   if (!s) return null;
   return { token: t, name: s.name, dir: path.join(SPACES, t) };
 }
-function setCookie(res, token, maxAge) {
-  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`);
+function isHttpsReq(req) {
+  return Boolean(req && (req.socket?.encrypted || String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase() === 'https'));
+}
+function setCookie(res, token, maxAge, req) {
+  const attrs = isHttpsReq(req) ? 'SameSite=None; Secure' : 'SameSite=Lax';
+  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; ${attrs}; Max-Age=${maxAge}`);
 }
 const spMaps = (sp) => path.join(sp.dir, 'maps');
 const spHist = (sp) => path.join(sp.dir, 'history');
@@ -268,7 +278,7 @@ const server = createServer(async (req, res) => {
         const t = String(body.token).trim();
         const idx = await readIndex();
         if (!idx.spaces[t]) return send(res, 404, { ok: false, err: '链接无效或空间已删除' });
-        setCookie(res, t, 31536000);
+        setCookie(res, t, 31536000, req);
         return send(res, 200, { ok: true, name: idx.spaces[t].name, token: t });
       }
 
@@ -284,7 +294,7 @@ const server = createServer(async (req, res) => {
         if (tooManyFails(name)) return send(res, 429, { ok: false, err: '口令错误次数太多，等 5 分钟再试' });
         if (hashPin(pin, hit[0]) !== hit[1].pinHash) { noteFail(name); return send(res, 401, { ok: false, err: '口令不对' }); }
         fails.delete(name);
-        setCookie(res, hit[0], 31536000);
+        setCookie(res, hit[0], 31536000, req);
         return send(res, 200, { ok: true, name, token: hit[0], existed: true });
       }
       const token = randomBytes(16).toString('hex');
@@ -295,7 +305,7 @@ const server = createServer(async (req, res) => {
       if (Object.keys(idx.spaces).length === 0) migrated = await migrateLegacy({ dir });
       idx.spaces[token] = { name, pinHash: hashPin(pin, token), createdAt: Date.now() };
       await writeIndex(idx);
-      setCookie(res, token, 31536000);
+      setCookie(res, token, 31536000, req);
       return send(res, 200, { ok: true, name, token, created: true, migrated });
     }
     if (req.method === 'DELETE' || p === '/api/space/leave') { /* 下面统一处理 */ }
@@ -303,7 +313,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (p === '/api/space/leave') {
-    setCookie(res, 'x', 0);
+    setCookie(res, 'x', 0, req);
     return send(res, 200, { ok: true });
   }
 
@@ -311,7 +321,8 @@ const server = createServer(async (req, res) => {
     const sp = await resolveSpace(req);
     if (!sp) return send(res, 401, NO_SPACE);
     const host = req.headers.host || 'localhost';
-    return send(res, 200, { ok: true, url: `http://${host}/?k=${sp.token}`, name: sp.name });
+    const proto = isHttpsReq(req) ? 'https' : 'http';
+    return send(res, 200, { ok: true, url: `${proto}://${host}/?k=${sp.token}`, name: sp.name });
   }
 
   // ---- 以下 /api/* 要求已进入空间（静态资源不校验，否则连首页都打不开）----
