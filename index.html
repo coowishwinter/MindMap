@@ -27,7 +27,7 @@ button.on{background:#0e9b6c;border-color:#0e9b6c;color:#fff}
 #canvas.pan{cursor:grabbing}
 canvas.linking,#canvas.linking{cursor:crosshair}
 #edges{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-#nodes{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#nodes{position:absolute;left:0;top:0;transform-origin:0 0}
 .node{position:absolute;width:max-content;max-width:290px;padding:9px 13px;border-radius:11px;background:#fff;
  border:1px solid #e3e9f4;border-left:4px solid #888;box-shadow:0 1px 2px rgba(24,36,66,.07);
  font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;cursor:grab;user-select:none}
@@ -50,16 +50,17 @@ canvas.linking,#canvas.linking{cursor:crosshair}
  opacity:0;pointer-events:none;transition:opacity .12s ease}
 .node .node-acts::before{content:"";position:absolute;left:-10px;top:-6px;right:-4px;bottom:-6px;z-index:-1}
 .node:hover>.node-acts,.node.sel>.node-acts,.node.collapsed>.node-acts{opacity:1;pointer-events:auto}
-.node.editing>.node-acts{opacity:0;pointer-events:none}
-.node .node-acts>div{display:flex;align-items:center;justify-content:center;height:21px;cursor:pointer;
- font-size:12px;font-weight:700;white-space:nowrap;transition:background .12s,color .12s}
-.node .node-acts .tgl{min-width:22px;padding:0 5px;color:#4a5876;border-radius:99px 0 0 99px}
+.node.editing>.node-acts{display:none}
+.node .node-acts>div{display:flex;align-items:center;justify-content:center;height:26px;cursor:pointer;
+ font-size:13px;font-weight:700;white-space:nowrap;transition:background .12s,color .12s}
+.node .node-acts .tgl{min-width:28px;padding:0 7px;color:#4a5876;border-radius:99px 0 0 99px;font-size:19px;line-height:1}
 .node .node-acts .tgl:hover{background:#eef3ff;color:#2b58d4}
-.node .node-acts .col-cnt{padding:0 7px;color:#2b58d4;background:#eef3ff;font-size:11px;border-radius:99px}
+.node .node-acts .col-cnt{padding:0 9px;color:#2b58d4;background:#eef3ff;font-size:12.5px;border-radius:99px;gap:3px}
+.node .node-acts .col-cnt .tri{font-size:17px;line-height:1}
 .node .node-acts .col-cnt:hover{background:#2b58d4;color:#fff}
 .node.root .node-acts .col-cnt{background:#22304d;color:#fff}
 .node.root .node-acts .col-cnt:hover{background:#2b58d4}
-.node .node-acts .add{min-width:22px;padding:0 6px;color:#0e9b6c;border-radius:0 99px 99px 0;
+.node .node-acts .add{min-width:26px;padding:0 7px;color:#0e9b6c;border-radius:0 99px 99px 0;font-size:14px;
  border-left:1px solid #e4e9f2}
 .node .node-acts .add:hover{background:#0e9b6c;color:#fff}
 .node .node-acts.leaf .add{border-left:0;border-radius:99px}
@@ -105,16 +106,26 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 #notes .ft{padding:8px 14px;border-top:1px solid #eef2f8;font-size:11px;color:#8b96ab}
 #start{position:fixed;inset:54px 0 0 0;display:flex;align-items:center;justify-content:center;z-index:22;background:rgba(247,249,253,.94)}
 #start.off{display:none}
-#start .sb{width:min(640px,92vw);background:#fff;border:1px solid #e4e9f2;border-radius:18px;box-shadow:0 18px 50px rgba(20,30,60,.10);padding:26px 28px}
+#start .sb{width:min(640px,92vw);max-height:calc(100vh - 84px);overflow:auto;background:#fff;border:1px solid #e4e9f2;border-radius:18px;box-shadow:0 18px 50px rgba(20,30,60,.10);padding:24px 26px}
 #start h2{margin:0 0 4px;font-size:19px}
-#start p.sub{margin:0 0 18px;color:#8b96ab;font-size:13px}
-#drop{border:2px dashed #c8d4e8;border-radius:14px;padding:30px 20px;text-align:center;color:#6b7a94;font-size:13.5px;line-height:1.9;background:#fafcff;transition:.15s}
+#start p.sub{margin:0 0 14px;color:#8b96ab;font-size:13px}
+#resumeBox{display:none;margin:0 0 14px;padding:14px 16px;border-radius:13px;border:1.5px solid #c5d6fa;background:linear-gradient(180deg,#f5f8ff,#eef4ff)}
+#resumeBox.on{display:block}
+#resumeBox.dirty{border-color:#f2c999;background:linear-gradient(180deg,#fffaf3,#fff4e5)}
+#resumeBox .rt{font-size:13.5px;font-weight:700;color:#1b2333}
+#resumeBox .rm{margin:4px 0 11px;font-size:12px;color:#5b6982;line-height:1.6}
+#resumeBox .ra{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#resumeBox .ra button{padding:7px 12px;font-size:12.5px}
+#resumeBox .ra .clr{margin-left:auto;color:#8b96ab;border-color:transparent;background:transparent}
+#resumeBox .ra .clr:hover{color:#d94a44;background:#fff1f0}
+#resumeBox.on ~ .row{display:none}
+#drop{border:2px dashed #c8d4e8;border-radius:14px;padding:24px 18px;text-align:center;color:#6b7a94;font-size:13.5px;line-height:1.9;background:#fafcff;transition:.15s}
 #drop.hot{border-color:#0e9b6c;background:#f0fbf6;color:#0e9b6c}
-#start .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+#start .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 #start .row button{padding:9px 14px;font-size:13.5px}
-#start .quick{margin-top:14px;font-size:12.5px;color:#8b96ab}
+#start .quick{margin-top:12px;font-size:12.5px;color:#8b96ab}
 #start .quick button{margin:4px 6px 0 0;font-size:12px;padding:5px 9px}
-#start .files{margin-top:16px;border-top:1px solid #eef2f8;padding-top:12px}
+#start .files{margin-top:14px;border-top:1px solid #eef2f8;padding-top:12px}
 #start .files h4{margin:0 0 8px;font-size:12px;color:#8b96ab;font-weight:600;letter-spacing:.3px}
 #start .files .fi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid #eef2f8;border-radius:9px;margin-bottom:6px;font-size:12.5px}
 #start .files .fi b{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -204,8 +215,9 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 <div id="ctxmenu"></div>
 <div id="start"><div class="sb">
   <h2>思维导图工作台</h2>
-  <p class="sub">空白画布。新建一张，或把你的图拖进来。</p>
-  <div id="drop">把 <b>.mmap</b> / <b>.xmind</b> / <b>.md</b> / <b>.json</b> / <b>.html</b> 文件<b>拖到这里</b><br>（也可以点下面的「打开文件」）</div>
+  <p class="sub">选择继续上次编辑、新建空白导图，或打开其他文件。</p>
+  <div id="resumeBox"></div>
+  <div id="drop">把 <b>.mmap</b> / <b>.xmind</b> / <b>.md</b> / <b>.json</b> / <b>.html</b> 文件<b>拖到这里</b><br>（也可以点下面的「打开本机文件」或从下方列表选择）</div>
   <div class="row">
     <button class="primary" id="sNew">＋ 新建空白图</button>
     <button id="sOpen">📂 打开本机文件…</button>
@@ -281,7 +293,7 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
     <tr><td><b>打开 / 拖入</b></td><td>把 <code>.xmind</code> / <code>.md</code> / <code>.json</code> / <code>.html</code> <b>拖进窗口</b>松手，或点「📂 打开文件」</td></tr>
     <tr><td><b>本地导入</b></td><td>点「⬆ 本地导入」，或把 <code>.xmind</code> / Markdown 大纲 <code>.md</code> / 本工具导出的 <code>.json</code> / 单文件 <code>.html</code> 拖进窗口</td></tr>
-    <tr><td><b>断点续存</b></td><td>每次修改（含打字与备注）实时写入本机断点并同步云端草稿；误关浏览器、崩溃或刷新后<b>自动恢复上次编辑现场</b>，有未保存改动时关闭标签也会拦截提醒</td></tr>
+    <tr><td><b>断点续存</b></td><td>每次修改（含打字与备注）实时写入本机断点并同步云端草稿；误关浏览器、崩溃或刷新后重新打开会<b>提示选择「继续上次编辑 / 新建空白图 / 打开其他文件」</b>，有未保存改动时关闭标签也会拦截提醒</td></tr>
     <tr><td><b>多用户</b></td><td>左上角「👤 空间」就是你的身份：<b>图/历史/草稿按空间隔离</b>，别人的列表里看不到你的；换设备用「专属链接」进同一空间，共用电脑请点「退出空间」</td></tr>
     <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看、不需要服务器</td></tr>
   </table>
@@ -448,7 +460,9 @@ function render(){
     if(kids.length){
       if(isCol){
         var cnt=subIds(n).length-1;
-        var cb=document.createElement("div");cb.className="col-cnt";cb.textContent="\u25B8 "+cnt;
+        var cb=document.createElement("div");cb.className="col-cnt";
+        var tri=document.createElement("span");tri.className="tri";tri.textContent="\u25B8";cb.appendChild(tri);
+        cb.appendChild(document.createTextNode(String(cnt)));
         cb.title=stepExpand?"已折叠 "+cnt+" 个子孙节点，点击仅展开此节点（子节点保持折叠）":"已折叠 "+cnt+" 个子孙节点，点击展开";
         acts.appendChild(cb);
       }else{
@@ -471,7 +485,7 @@ function render(){
   place();drawEdges();applyView();
   updateLevelBar();
 }
-function place(){nodes.forEach(function(n){if(n._el){n._el.style.left=n.x+"px";n._el.style.top=n.y+"px";}});}
+function place(){nodes.forEach(function(n){if(n._el){n._el.style.left=Math.round(n.x)+"px";n._el.style.top=Math.round(n.y)+"px";}});}
 function drawEdges(){
   nodes.forEach(function(n){
     if(!n._path)return;
@@ -500,8 +514,9 @@ function drawLinks(){
   });
 }
 function applyView(){
-  nodesEl.style.transform="translate("+view.x+"px,"+view.y+"px) scale("+view.s+")";
-  var t="translate("+view.x+" "+view.y+") scale("+view.s+")";
+  var tx=Math.round(view.x),ty=Math.round(view.y);
+  nodesEl.style.transform="translate("+tx+"px,"+ty+"px) scale("+view.s+")";
+  var t="translate("+tx+" "+ty+") scale("+view.s+")";
   edgeLayer.setAttribute("transform",t);linkLayer.setAttribute("transform",t);
 }
 function fit(){
@@ -612,12 +627,13 @@ function startEdit(id,opts){
   label.contentEditable="true";
   if(opts&&opts.replaceText!==undefined){
     label.textContent=opts.replaceText;
-    label.focus();
+    try{label.focus({preventScroll:true});}catch(_){label.focus();}
     try{var r=document.createRange();r.selectNodeContents(label);r.collapse(false);var s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}
   }else{
-    label.focus();
+    try{label.focus({preventScroll:true});}catch(_){label.focus();}
     try{var r=document.createRange();r.selectNodeContents(label);var s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}
   }
+  canvas.scrollLeft=0;canvas.scrollTop=0;
   var onInput=function(){
     dirty=true; setStatus("dirty"); updateTitle();
     clearTimeout(editSaveT);
@@ -1177,23 +1193,46 @@ function bootFrom(d,src,name){
 function showStart(){
   var st=document.getElementById("start"); if(!st)return; st.classList.remove("off");
   setInEditor(false);
+  var rb=document.getElementById("resumeBox");
+  if(rb){
+    rb.innerHTML="";
+    rb.className="";
+    if(savedDoc&&savedDoc.nodes&&savedDoc.nodes.length){
+      var root=savedDoc.nodes.filter(function(n){return n.parent===null;})[0]||{text:"(无名)"};
+      var tsTxt=fmtTime(savedDoc.savedAt);
+      var hasDirty=!!savedDoc.dirty;
+      rb.className="on"+(hasDirty?" dirty":"");
+      var rt=document.createElement("div"); rt.className="rt";
+      rt.textContent=hasDirty?"⚡ 检测到上次未保存的编辑断点":"↻ 发现上次编辑断点";
+      var rm=document.createElement("div"); rm.className="rm";
+      rm.textContent="「"+root.text+"」 · "+savedDoc.nodes.length+" 个节点"+(tsTxt?" · 保存于 "+tsTxt:"")+(savedDoc.name?" · 文件："+savedDoc.name:"")+"。请选择继续上次编辑、新建空白图，或打开其他导图：";
+      var ra=document.createElement("div"); ra.className="ra";
+      var bCont=document.createElement("button"); bCont.className="primary";
+      bCont.textContent="↻ 继续上次编辑";
+      bCont.onclick=function(){bootFrom(savedDoc,"checkpoint");};
+      var bNew=document.createElement("button");
+      bNew.textContent="＋ 新建空白图";
+      bNew.onclick=newMap;
+      var bOther=document.createElement("button");
+      bOther.textContent="📂 打开本机文件…";
+      bOther.onclick=function(){$("fileIn").click();};
+      var bClr=document.createElement("button"); bClr.className="clr";
+      bClr.textContent="🗑 清除断点";
+      bClr.title="清除最近一次自动保存的断点草稿";
+      bClr.onclick=function(){
+        if(savedDoc&&savedDoc.dirty&&!window.confirm("当前断点包含未保存到文件的改动，确定清除吗？"))return;
+        clearDraftCheckpoint(); savedDoc=null; showStart(); toast("已清除断点草稿");
+      };
+      ra.appendChild(bCont); ra.appendChild(bNew); ra.appendChild(bOther); ra.appendChild(bClr);
+      rb.appendChild(rt); rb.appendChild(rm); rb.appendChild(ra);
+    }
+  }
   var q=document.getElementById("quick"); q.innerHTML="";
-  if(savedDoc&&savedDoc.nodes&&savedDoc.nodes.length){
-    var root=savedDoc.nodes.filter(function(n){return n.parent===null;})[0]||{text:"(无名)"};
-    var tsTxt=fmtTime(savedDoc.savedAt);
-    var b=document.createElement("button");
-    b.className=savedDoc.dirty?"primary":"";
-    b.textContent="↻ 继续上次断点："+root.text+(tsTxt?"（"+tsTxt+"）":"")+(savedDoc.dirty?" · 未保存":"");
-    b.onclick=function(){bootFrom(savedDoc,"draft");};
-    q.appendChild(b);
-    var clr=document.createElement("button");
-    clr.textContent="🗑 清除断点";
-    clr.title="清除最近一次自动保存的断点草稿";
-    clr.onclick=function(){
-      if(savedDoc&&savedDoc.dirty&&!window.confirm("当前断点包含未保存到文件的改动，确定清除吗？"))return;
-      clearDraftCheckpoint(); savedDoc=null; showStart(); toast("已清除断点草稿");
-    };
-    q.appendChild(clr);
+  if(offline&&INITIAL&&INITIAL.nodes){
+    var bi=document.createElement("button");
+    bi.textContent="📄 打开内嵌原图";
+    bi.onclick=function(){bootFrom(INITIAL,"local");};
+    q.appendChild(bi);
   }
   var fl=document.getElementById("files");
   if(fl){
@@ -1201,7 +1240,7 @@ function showStart(){
     if(!offline){
       fetch("/api/files").then(function(r){return r.json();}).then(function(j){
         var fs=(j&&j.files)||[]; if(!fs.length)return;
-        var h=document.createElement("h4"); h.textContent="服务器上的图（"+fs.length+"）"; fl.appendChild(h);
+        var h=document.createElement("h4"); h.textContent="打开服务器上的其他导图（"+fs.length+"）"; fl.appendChild(h);
         fs.forEach(function(f){
           var row=document.createElement("div"); row.className="fi";
           var b=document.createElement("b"); b.textContent=f.title;
@@ -1223,7 +1262,7 @@ function showStart(){
   if(!offline){
     fetch("犀码互联商业地图.json").then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
       var b=document.createElement("button");
-      b.textContent="📄 打开「犀码互联商业地图」";
+      b.textContent="📄 打开示例「犀码互联商业地图」";
       b.onclick=function(){bootFrom(d,"local");};
       q.appendChild(b);
     }).catch(function(){});
@@ -1232,6 +1271,7 @@ function showStart(){
 function hideStart(){ var st=document.getElementById("start"); if(st)st.classList.add("off"); setInEditor(true); }
 function newMap(){
   if(nodes.length>1&&!window.confirm("新建会替换当前这张图（服务器存档也会被覆盖）。要先「⬇ 导出」备份吗？"))return;
+  if(nodes.length===0&&savedDoc&&savedDoc.dirty&&!window.confirm("新建会覆盖上次未保存的断点草稿，确定新建空白图吗？"))return;
   clearUndo();
   nodes=[];seq=1;rootId=null;sel=null;
   curName=null;curLocalName=null;
@@ -1246,7 +1286,8 @@ function init(){
     var bf=document.getElementById("bFiles"); if(bf)bf.style.display="none";
     var offCkpt=parseLocal();
     if(offCkpt&&offCkpt.nodes&&offCkpt.nodes.length&&(offCkpt.dirty||offCkpt.inEditor)){
-      bootFrom(offCkpt,"checkpoint");
+      savedDoc=offCkpt;
+      nodes=[];rootId=null;sel=null;render();showStart();
     }else{
       bootFrom(INITIAL,"local");
     }
@@ -1272,13 +1313,7 @@ function enterSpace(name){
   var g=document.getElementById("gate"); if(g)g.classList.add("off");
   var done=function(srv){
     savedDoc=pickLatestDraft(srv);
-    var sess=readSessionMeta();
-    var autoResume=!!(savedDoc&&savedDoc.nodes&&savedDoc.nodes.length&&(savedDoc.dirty||(sess&&sess.inEditor)||savedDoc.inEditor));
-    if(autoResume){
-      bootFrom(savedDoc,"checkpoint");
-    }else{
-      nodes=[];rootId=null;sel=null;render();showStart();
-    }
+    nodes=[];rootId=null;sel=null;render();showStart();
   };
   fetch("/api/draft").then(function(r){return r.status===204?null:(r.ok?r.json():null);}).then(done).catch(function(){done(null);});
 }
