@@ -143,25 +143,6 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 #history .empty{padding:26px 14px;text-align:center;color:#8b96ab;font-size:12.5px;line-height:1.9}
 #toast{position:fixed;left:50%;bottom:52px;transform:translate(-50%,12px);background:#22304d;color:#fff;font-size:12.5px;padding:8px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.18s;z-index:60;max-width:80vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-#gate{position:fixed;inset:0;background:linear-gradient(180deg,#f7f9fd,#eef3fb);display:flex;align-items:center;justify-content:center;z-index:80;padding:18px}
-#gate.off{display:none}
-#gate .gb{width:min(430px,94vw);background:#fff;border:1px solid #e4e9f2;border-radius:18px;box-shadow:0 18px 50px rgba(20,30,60,.12);padding:26px 26px 22px}
-#gate h2{margin:0 0 4px;font-size:19px}
-#gate p.sub{margin:0 0 18px;color:#8b96ab;font-size:12.5px;line-height:1.7}
-#gate label{display:block;font-size:12.5px;color:#4a5876;margin:12px 0 5px}
-#gate input{width:100%;font:inherit;font-size:13.5px;padding:9px 11px;border:1px solid #d9e1ee;border-radius:9px;outline:0}
-#gate input:focus{border-color:#2b58d4;box-shadow:0 0 0 3px rgba(43,88,212,.12)}
-#gate .go{width:100%;margin-top:18px;padding:10px 0;font-size:14px}
-#gate .split{margin-top:16px;border-top:1px solid #eef2f8;padding-top:12px;font-size:12px;color:#8b96ab}
-#gate .split input{margin-top:6px;font-size:12.5px;padding:7px 10px}
-#gate .split button{margin-top:6px;padding:7px 12px}
-#gMsg{margin-top:12px;font-size:12.5px;color:#d94a44;min-height:16px}
-#space{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
-#space.on{display:flex}
-#space .box{background:#fff;border-radius:14px;padding:20px 22px;width:min(470px,94vw);box-shadow:0 20px 60px rgba(10,20,50,.35);font-size:13px;line-height:1.8}
-#space h3{margin:0 0 10px;font-size:15px}
-#space input{width:100%;font:inherit;font-size:12.5px;padding:8px 10px;border:1px solid #d9e1ee;border-radius:8px;background:#f8fafd;color:#4a5876}
-#space .row{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
 #export{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
 #export.on{display:flex}
 #export .box{background:#fff;border-radius:14px;padding:20px 22px;width:min(520px,94vw);box-shadow:0 20px 60px rgba(10,20,50,.35);font-size:13px}
@@ -186,9 +167,11 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 </head>
 <body>
 <div id="toolbar">
-  <div class="brand">犀码互联 · 思维导图<small>工作台 · 打开即空白 / 可拖入</small></div>
+  <div class="brand">犀码互联 · 思维导图<small>本地工作台 · 数据仅存本机浏览器</small></div>
   <button id="bNew">＋ 新建</button>
-  <button id="bFiles" title="返回文件列表 / 切换或新建导图">📂 文件</button>
+  <button id="bFiles" title="返回文件库 / 切换或新建导图">📂 文件</button>
+  <button id="bSave" title="保存到本机文件库 (Ctrl+S)">💾 保存</button>
+  <button id="bHist" title="查看本机历史版本">🕘 历史</button>
   <button id="bUndo" disabled title="回撤上一步 (Ctrl+Z)">↶ 回撤</button>
   <button id="bRedo" disabled title="重做 (Ctrl+Y)">↷ 重做</button>
   <button class="primary" id="bAdd">＋ 子节点</button>
@@ -204,7 +187,6 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <button id="bExport">⬇ 导出到本地</button>
   <button id="bImport">⬆ 本地导入</button>
   <button id="bHelp">? 帮助</button>
-  <button id="bSpace">👤 <span id="spaceName">空间</span></button>
   <span id="savestate" style="font-size:11.5px;color:#8b96ab;white-space:nowrap;padding:0 6px"></span>
 </div>
 <div id="canvas"><svg id="edges"><g id="edgeLayer"></g><g id="links"></g></svg><div id="nodes"></div><div id="reorderLine"><span>调整排序</span></div></div>
@@ -233,32 +215,6 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 </div>
 <div id="history"><div class="hd"><span id="histTitle">历史版本</span><button id="histClose">✕</button></div><div class="list" id="histList"></div></div>
 <div id="toast"></div>
-<div id="gate" class="off"><div class="gb">
-  <h2>思维导图工作台</h2>
-  <p class="sub">输入名字进入自己的工作空间——图、历史、草稿都只属于你；换电脑时用「专属链接」进同一个空间。</p>
-  <label>你的名字</label>
-  <input id="gName" maxlength="20" placeholder="比如：老宋" autocomplete="off">
-  <label>口令（≥4 位，第一次进来就是用它创建）</label>
-  <input id="gPin" type="password" maxlength="32" placeholder="只有你自己知道" autocomplete="off">
-  <button class="primary go" id="gGo">进入 / 创建</button>
-  <div class="split">已经有专属链接？
-    <input id="gLink" placeholder="把链接或令牌粘到这里" autocomplete="off">
-    <button id="gLinkGo">用链接进入</button>
-  </div>
-  <div id="gMsg"></div>
-</div></div>
-
-<div id="space"><div class="box">
-  <h3>我的空间</h3>
-  <div>空间名：<b id="spName">—</b></div>
-  <div style="margin-top:10px">专属链接（换电脑/手机打开它就能进同一个空间，<b>别给别人</b>）：</div>
-  <input id="spLink" readonly>
-  <div class="row">
-    <button id="spCopy">复制链接</button>
-    <button id="spLeave">退出空间</button>
-    <button class="primary" id="spClose">关闭</button>
-  </div>
-</div></div>
 
 <div id="export"><div class="box">
   <h3>导出到本地…</h3>
@@ -293,9 +249,8 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
     <tr><td><b>打开 / 拖入</b></td><td>把 <code>.xmind</code> / <code>.md</code> / <code>.json</code> / <code>.html</code> <b>拖进窗口</b>松手，或点「📂 打开文件」</td></tr>
     <tr><td><b>本地导入</b></td><td>点「⬆ 本地导入」，或把 <code>.xmind</code> / Markdown 大纲 <code>.md</code> / 本工具导出的 <code>.json</code> / 单文件 <code>.html</code> 拖进窗口</td></tr>
-    <tr><td><b>断点续存</b></td><td>每次修改（含打字与备注）实时写入本机断点并同步云端草稿；误关浏览器、崩溃或刷新后重新打开会<b>提示选择「继续上次编辑 / 新建空白图 / 打开其他文件」</b>，有未保存改动时关闭标签也会拦截提醒</td></tr>
-    <tr><td><b>多用户</b></td><td>左上角「👤 空间」就是你的身份：<b>图/历史/草稿按空间隔离</b>，别人的列表里看不到你的；换设备用「专属链接」进同一空间，共用电脑请点「退出空间」</td></tr>
-    <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看、不需要服务器</td></tr>
+    <tr><td><b>本地化与断点续存</b></td><td>无需登录，所有导图、文件库、历史版本与断点草稿均<b>100% 保存在本机浏览器</b>中；误关浏览器或刷新后重新打开会<b>提示选择「继续上次编辑 / 新建空白图 / 打开其他文件」</b>，有未保存改动时关闭标签也会拦截提醒</td></tr>
+    <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看</td></tr>
   </table>
   <div style="margin-top:14px;text-align:right"><button class="primary" id="bHelpClose">知道了</button></div>
 </div></div>
@@ -315,12 +270,11 @@ var canvas=document.getElementById("canvas"),nodesEl=document.getElementById("no
 var edgeLayer=document.getElementById("edgeLayer"),linkLayer=document.getElementById("links");
 var notesEl=document.getElementById("notes"),notesArea=document.getElementById("notesArea"),notesTitle=document.getElementById("notesTitle"),notesFt=document.getElementById("notesFt");
 var nodes=[],seq=1,rootId=null,sel=null,view={x:0,y:0,s:1},zTop=10,saveT=null,notesT=null;
-var curName=null;       // 当前文件在服务器文件库里的名字（xxx.mmap）；null = 还没存成文件
-var curLocalName=null;  // 从本机打开时的原文件名（保存=下载到下载目录，同名覆盖）
+var curName=null;       // 当前文件在本地文件库里的名字（xxx.mmap）；null = 还没存成文件
+var curLocalName=null;  // 从磁盘打开时的原文件名（保存=同步到本地库或下载）
 var dirty=false;        // 有没有还没写进文件的改动
 var lastSnap=0;         // 上次自动快照时间（编辑中每 3 分钟留一份历史）
-var spaceName=null;     // 我的空间名（身份由 cookie 承载，前端只用于显示）
-var offline=false;      // 单文件离线模式（导出的 .html 内嵌了 INITIAL，不连服务器）
+var offline=false;      // 单文件导出模式（导出的 .html 内嵌了 INITIAL）
 var drag=null,pan=null,lastTap={id:null,t:0},linkFrom=null;
 var stepExpand=(function(){try{var v=localStorage.getItem("xima-step-expand");return v===null?true:v==="1";}catch(_){return true;}})();
 var imeProxy=document.getElementById("imeProxy"),imeComposing=false;
@@ -328,10 +282,9 @@ var UNDO_MAX=60,undoStack=[],redoStack=[],notesPreSnap=null,notesPreVal=null;
 var suppressUnload=false,viewSaveT=null,editSaveT=null;
 
 function modalOpen(){
-  var g=document.getElementById("gate"),s=document.getElementById("start");
-  if(g&&!g.classList.contains("off"))return true;
+  var s=document.getElementById("start");
   if(s&&!s.classList.contains("off"))return true;
-  return ["space","export","help"].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains("on");});
+  return ["export","help"].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains("on");});
 }
 function takeSnap(){
   return JSON.stringify({
@@ -640,7 +593,7 @@ function startEdit(id,opts){
     editSaveT=setTimeout(function(){
       var json=JSON.stringify(payload(true));
       writeLocalCheckpoint(json);
-      syncDraftNet(json);
+      setStatus("draft");
     },250);
   };
   var onKey=function(e){
@@ -987,11 +940,174 @@ function moveSibling(id,dir){
   reorderNode(id,target,takeSnap());
 }
 
-/* ---------- 存取 & 断点续存 ---------- */
+/* ---------- 本地持久化仓库（IndexedDB + localStorage 兜底，无服务器依赖） ---------- */
+var LocalStore=(function(){
+  var DB_NAME="xima-mindmap-local",DB_VER=1,SNAP_MAX=30;
+  var LS_FILES="xima-local-files-v1",LS_HIST="xima-local-hist-v1";
+  var dbP=null;
+  function titleOf(doc){
+    var r=(doc&&doc.nodes||[]).filter(function(n){return n.parent===null;})[0];
+    return (r&&r.text)||"(无名)";
+  }
+  function nodesKey(doc){ return JSON.stringify((doc&&doc.nodes)||[]); }
+  function lsGet(k,def){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(_){return def;} }
+  function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(_){return false;} }
+  function openDB(){
+    if(dbP)return dbP;
+    if(typeof indexedDB==="undefined")return Promise.resolve(null);
+    dbP=new Promise(function(resolve){
+      try{
+        var req=indexedDB.open(DB_NAME,DB_VER);
+        req.onupgradeneeded=function(e){
+          var db=e.target.result;
+          if(!db.objectStoreNames.contains("files"))db.createObjectStore("files",{keyPath:"name"});
+          if(!db.objectStoreNames.contains("history")){
+            var hs=db.createObjectStore("history",{keyPath:"id"});
+            hs.createIndex("by_name","name",{unique:false});
+          }
+        };
+        req.onsuccess=function(){resolve(req.result);};
+        req.onerror=function(){resolve(null);};
+      }catch(_){resolve(null);}
+    });
+    return dbP;
+  }
+  function withStore(storeName,mode,fn){
+    return openDB().then(function(db){
+      if(!db)return null;
+      return new Promise(function(resolve,reject){
+        try{
+          var tx=db.transaction(storeName,mode);
+          var st=tx.objectStore(storeName);
+          var res=fn(st);
+          tx.oncomplete=function(){resolve(res&&res.result!==undefined?res.result:res);};
+          tx.onerror=function(){reject(tx.error);};
+        }catch(err){reject(err);}
+      });
+    });
+  }
+  function fmtTs(){
+    var d=new Date();
+    var p=function(n){return n<10?"0"+n:String(n);};
+    return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+  }
+  function listFiles(){
+    return withStore("files","readonly",function(st){return st.getAll();}).then(function(rows){
+      if(rows===null){
+        var map=lsGet(LS_FILES,{});
+        rows=Object.keys(map).map(function(k){return map[k];});
+      }
+      return (rows||[]).map(function(r){
+        return {name:r.name,title:r.title||titleOf(r.data),nodes:r.nodes||((r.data&&r.data.nodes)||[]).length,size:r.size||0,mtime:r.mtime||0};
+      }).sort(function(a,b){return b.mtime-a.mtime;});
+    }).catch(function(){return [];});
+  }
+  function getFile(name){
+    return withStore("files","readonly",function(st){return st.get(name);}).then(function(r){
+      if(r===null){var map=lsGet(LS_FILES,{});return (map[name]&&map[name].data)||null;}
+      return (r&&r.data)||null;
+    }).catch(function(){return null;});
+  }
+  function listHistRaw(name){
+    return withStore("history","readonly",function(st){return st.index("by_name").getAll(name);}).then(function(rows){
+      if(rows===null){
+        var all=lsGet(LS_HIST,{});
+        rows=all[name]||[];
+      }
+      return (rows||[]).slice().sort(function(a,b){return a.mtime-b.mtime;});
+    }).catch(function(){return [];});
+  }
+  function saveSnapshot(name,doc,force){
+    return listHistRaw(name).then(function(items){
+      var curKey=nodesKey(doc);
+      if(!force&&items.length&&nodesKey(items[items.length-1].data)===curKey)return null;
+      var base=fmtTs(),ts=base,i=1;
+      var existing={};items.forEach(function(it){existing[it.ts]=1;});
+      while(existing[ts])ts=base+"-"+(i++);
+      var jsonLen=JSON.stringify(doc).length;
+      var rec={id:name+"::"+ts,name:name,ts:ts,mtime:Date.now(),nodes:(doc.nodes||[]).length,size:jsonLen,data:doc};
+      return openDB().then(function(db){
+        if(!db){
+          var all=lsGet(LS_HIST,{});
+          var arr=all[name]||[];
+          arr.push(rec);
+          if(arr.length>SNAP_MAX)arr=arr.slice(arr.length-SNAP_MAX);
+          all[name]=arr;
+          lsSet(LS_HIST,all);
+          return ts;
+        }
+        return withStore("history","readwrite",function(st){
+          st.put(rec);
+          if(items.length>=SNAP_MAX){
+            items.slice(0,items.length-SNAP_MAX+1).forEach(function(old){st.delete(old.id);});
+          }
+          return ts;
+        }).then(function(){return ts;});
+      });
+    }).catch(function(){return null;});
+  }
+  function saveFile(name,doc,forceSnap){
+    var jsonLen=JSON.stringify(doc).length;
+    var rec={name:name,title:titleOf(doc),nodes:(doc.nodes||[]).length,size:jsonLen,mtime:Date.now(),data:doc};
+    return openDB().then(function(db){
+      if(!db){
+        var map=lsGet(LS_FILES,{});
+        map[name]=rec;
+        lsSet(LS_FILES,map);
+        return saveSnapshot(name,doc,forceSnap);
+      }
+      return withStore("files","readwrite",function(st){st.put(rec);}).then(function(){
+        return saveSnapshot(name,doc,forceSnap);
+      });
+    });
+  }
+  function deleteFile(name){
+    return openDB().then(function(db){
+      if(!db){
+        var map=lsGet(LS_FILES,{});delete map[name];lsSet(LS_FILES,map);
+        var all=lsGet(LS_HIST,{});delete all[name];lsSet(LS_HIST,all);
+        return;
+      }
+      return withStore("files","readwrite",function(st){st.delete(name);}).then(function(){
+        return listHistRaw(name).then(function(items){
+          if(!items.length)return;
+          return withStore("history","readwrite",function(st){
+            items.forEach(function(it){st.delete(it.id);});
+          });
+        });
+      });
+    });
+  }
+  function listHistory(name){
+    return listHistRaw(name).then(function(items){
+      return items.slice().reverse().map(function(it){return {ts:it.ts,size:it.size,mtime:it.mtime,nodes:it.nodes};});
+    });
+  }
+  function getHistoryItem(name,ts){
+    return listHistRaw(name).then(function(items){
+      var hit=items.filter(function(it){return it.ts===ts;})[0];
+      return hit?hit.data:null;
+    });
+  }
+  function deleteHistoryItem(name,ts){
+    return openDB().then(function(db){
+      if(!db){
+        var all=lsGet(LS_HIST,{});
+        all[name]=(all[name]||[]).filter(function(it){return it.ts!==ts;});
+        lsSet(LS_HIST,all);
+        return;
+      }
+      return withStore("history","readwrite",function(st){st.delete(name+"::"+ts);});
+    });
+  }
+  return {listFiles:listFiles,getFile:getFile,saveFile:saveFile,deleteFile:deleteFile,saveSnapshot:saveSnapshot,listHistory:listHistory,getHistoryItem:getHistoryItem,deleteHistoryItem:deleteHistoryItem};
+})();
+
+/* ---------- 存取 & 断点续存（100% 本地） ---------- */
 var saveState=document.getElementById("savestate");
 function setStatus(s){
   if(!saveState)return;
-  saveState.textContent=s==="saving"?"保存中…":s==="saved"?"✓ 已保存":s==="dirty"?"● 有未保存改动":s==="draft"?"✓ 断点已自动存":s==="restored"?"✓ 已从断点恢复":s==="restored_dirty"?"✓ 已恢复断点（待保存）":s==="error"?"⚠ 保存失败":s==="local"?"✓ 本机断点已存":"";
+  saveState.textContent=s==="saving"?"保存中…":s==="saved"?"✓ 已存本地库":s==="dirty"?"● 有未保存改动":s==="draft"?"✓ 本机断点已存":s==="restored"?"✓ 已从断点恢复":s==="restored_dirty"?"✓ 已恢复断点（待保存）":s==="error"?"⚠ 保存失败":s==="local"?"✓ 本机断点已存":"";
   saveState.style.color=(s==="saved"||s==="restored")?"#0e9b6c":(s==="error"?"#d94a44":(s==="dirty"||s==="draft"||s==="restored_dirty"||s==="local")?"#e0772f":"#8b96ab");
 }
 function isInEditor(){
@@ -1006,15 +1122,10 @@ function offlineKey(){
   return "off_"+(h>>>0).toString(36)+"_"+INITIAL.nodes.length;
 }
 function ckptKey(){
-  if(offline)return KEY+":ckpt:"+offlineKey();
-  return KEY+":ckpt:"+(spaceName||"_anon");
+  return offline?(KEY+":ckpt:"+offlineKey()):(KEY+":ckpt:local");
 }
 function ckptMetaKey(){
-  if(offline)return KEY+":sess:"+offlineKey();
-  return KEY+":sess:"+(spaceName||"_anon");
-}
-function readSessionMeta(){
-  try{var r=localStorage.getItem(ckptMetaKey());return r?JSON.parse(r):null;}catch(_){return null;}
+  return offline?(KEY+":sess:"+offlineKey()):(KEY+":sess:local");
 }
 function setInEditor(flag){
   try{
@@ -1044,7 +1155,6 @@ function payload(includeLive){
     localName:curLocalName||null,
     dirty:dirty,
     savedAt:Date.now(),
-    space:spaceName||null,
     sel:sel||null,
     noteOpen:noteOpen,
     inEditor:isInEditor(),
@@ -1065,28 +1175,9 @@ function writeLocalCheckpoint(json){
   if(!offline){try{localStorage.setItem(KEY,json);}catch(_){}}
   setInEditor(isInEditor());
 }
-function syncDraftNet(json){
-  if(offline||!spaceName)return;
-  try{
-    fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:json})
-      .then(function(r){ setStatus(r.ok?(dirty?"draft":"saved"):"error"); })
-      .catch(function(){ setStatus("local"); });
-  }catch(_){setStatus("local");}
-}
-function flushCheckpoint(syncToServer){
+function flushCheckpoint(){
   if(!isInEditor())return;
-  var json=JSON.stringify(payload(true));
-  writeLocalCheckpoint(json);
-  if(syncToServer&&!offline&&spaceName){
-    if(navigator.sendBeacon&&json.length<60000){
-      try{
-        if(navigator.sendBeacon("/api/draft",new Blob([json],{type:"application/json"})))return;
-      }catch(_){}
-    }
-    try{
-      fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:json,keepalive:json.length<60000}).catch(function(){});
-    }catch(_){}
-  }
+  writeLocalCheckpoint(JSON.stringify(payload(true)));
 }
 function save(){
   dirty=true; clearTimeout(saveT); clearTimeout(viewSaveT);
@@ -1094,16 +1185,13 @@ function save(){
   var immediateJson=JSON.stringify(payload(true));
   writeLocalCheckpoint(immediateJson);
   saveT=setTimeout(function(){
-    var json=JSON.stringify(payload(true));
+    var doc=payload(true);
+    var json=JSON.stringify(doc);
     writeLocalCheckpoint(json);
-    if(offline){ setStatus("local"); return; }   // 离线单文件：只存本机，不请求服务器
-    syncDraftNet(json);
-    // 编辑过程中每 3 分钟自动留一份历史快照（只进 history/，不覆盖主文件）
-    if(Date.now()-lastSnap>180000){
+    setStatus(offline?"local":"draft");
+    if(!offline&&Date.now()-lastSnap>180000){
       lastSnap=Date.now();
-      try{
-        fetch("/api/snapshot?name="+encodeURIComponent(curName||"未命名图"),{method:"POST",headers:{"Content-Type":"application/json"},body:json}).catch(function(){});
-      }catch(_){}
+      LocalStore.saveSnapshot(curName||"未命名图.mmap",doc,false);
     }
   },300);
 }
@@ -1111,11 +1199,7 @@ function saveView(){
   if(!isInEditor())return;
   clearTimeout(viewSaveT);
   viewSaveT=setTimeout(function(){
-    var json=JSON.stringify(payload(true));
-    writeLocalCheckpoint(json);
-    if(!offline&&spaceName){
-      try{fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:json}).catch(function(){});}catch(_){}
-    }
+    writeLocalCheckpoint(JSON.stringify(payload(true)));
   },350);
 }
 function parseLocal(){
@@ -1124,10 +1208,7 @@ function parseLocal(){
     if(sc){var sd=JSON.parse(sc);if(sd&&sd.nodes&&sd.nodes.length)return sd;}
     if(!offline){
       var r=localStorage.getItem(KEY);
-      if(r){
-        var d=JSON.parse(r);
-        if(d&&d.nodes&&d.nodes.length&&(!d.space||!spaceName||d.space===spaceName))return d;
-      }
+      if(r){var d=JSON.parse(r);if(d&&d.nodes&&d.nodes.length)return d;}
       var o=localStorage.getItem(OLDKEY);
       if(o){var d2=JSON.parse(o);var root=(d2.nodes||[]).filter(function(n){return n.parent===null;})[0];
         if(root&&/犀码互联/.test(root.text))return d2;}
@@ -1135,24 +1216,8 @@ function parseLocal(){
   }catch(_){}
   return null;
 }
-function pickLatestDraft(srv){
-  var loc=parseLocal();
-  var hasSrv=!!(srv&&srv.nodes&&srv.nodes.length);
-  var hasLoc=!!(loc&&loc.nodes&&loc.nodes.length);
-  if(hasSrv&&hasLoc){
-    var tsSrv=Number(srv.savedAt)||0,tsLoc=Number(loc.savedAt)||0;
-    if(tsLoc>tsSrv){loc._fromLocalNewer=true;return loc;}
-    return srv;
-  }
-  if(hasSrv)return srv;
-  if(hasLoc){loc._fromLocalNewer=true;return loc;}
-  return null;
-}
 function clearDraftCheckpoint(){
   try{localStorage.removeItem(ckptKey());localStorage.removeItem(ckptMetaKey());localStorage.removeItem(KEY);}catch(_){}
-  if(!offline&&spaceName){
-    fetch("/api/draft",{method:"DELETE"}).catch(function(){});
-  }
 }
 function loadData(d){
   nodes=d.nodes.map(fresh);
@@ -1175,19 +1240,17 @@ function bootFrom(d,src,name){
   if(needsLayout()){ layoutAll();place();drawEdges();drawLinks();setTimeout(function(){centerRoot(0.6);},30); }
   else applyView();
   hideStart(); closeHistory();
-  if(src==="server"){ curName=name||null; curLocalName=null; dirty=false; setStatus("saved"); }
+  if(src==="library"){ curName=name||null; curLocalName=null; dirty=false; setStatus("saved"); }
   else if(src==="local"){ curName=null; curLocalName=name||null; dirty=false; setStatus(""); }
   else { curName=(d&&d.name)||null; curLocalName=(d&&d.localName)||null; dirty=!!(d&&d.dirty); setStatus(src==="checkpoint"?(dirty?"restored_dirty":"restored"):(dirty?"draft":"saved")); }
   if(d.noteOpen&&sel){notesEl.classList.add("on");syncNotePanel();}
   else{notesEl.classList.remove("on");}
   updateTitle(); paintSwatches();
   setInEditor(true);
-  var snapJson=JSON.stringify(payload());
-  writeLocalCheckpoint(snapJson);
+  writeLocalCheckpoint(JSON.stringify(payload()));
   if(src==="checkpoint"){
-    if(d._fromLocalNewer&&!offline&&spaceName){syncDraftNet(snapJson);}
     var rNode=byId(rootId),tsTxt=fmtTime(d.savedAt);
-    toast("已从断点自动恢复「"+(rNode?rNode.text:"思维导图")+"」"+(tsTxt?"（"+tsTxt+(dirty?" · 含未保存改动":"")+"）":""));
+    toast("已从本机断点恢复「"+(rNode?rNode.text:"思维导图")+"」"+(tsTxt?"（"+tsTxt+(dirty?" · 含未保存改动":"")+"）":""));
   }
 }
 function showStart(){
@@ -1220,7 +1283,7 @@ function showStart(){
       bClr.textContent="🗑 清除断点";
       bClr.title="清除最近一次自动保存的断点草稿";
       bClr.onclick=function(){
-        if(savedDoc&&savedDoc.dirty&&!window.confirm("当前断点包含未保存到文件的改动，确定清除吗？"))return;
+        if(savedDoc&&savedDoc.dirty&&!window.confirm("当前断点包含未保存到文件库的改动，确定清除吗？"))return;
         clearDraftCheckpoint(); savedDoc=null; showStart(); toast("已清除断点草稿");
       };
       ra.appendChild(bCont); ra.appendChild(bNew); ra.appendChild(bOther); ra.appendChild(bClr);
@@ -1238,20 +1301,20 @@ function showStart(){
   if(fl){
     fl.innerHTML="";
     if(!offline){
-      fetch("/api/files").then(function(r){return r.json();}).then(function(j){
-        var fs=(j&&j.files)||[]; if(!fs.length)return;
-        var h=document.createElement("h4"); h.textContent="打开服务器上的其他导图（"+fs.length+"）"; fl.appendChild(h);
+      LocalStore.listFiles().then(function(fs){
+        if(!fs.length)return;
+        var h=document.createElement("h4"); h.textContent="本地文件库中的导图（"+fs.length+"）"; fl.appendChild(h);
         fs.forEach(function(f){
           var row=document.createElement("div"); row.className="fi";
           var b=document.createElement("b"); b.textContent=f.title;
           var s=document.createElement("small");
           s.textContent=new Date(f.mtime).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})+" · "+f.nodes+"节点";
           var o=document.createElement("button"); o.textContent="打开"; o.className="primary";
-          o.onclick=function(){openServerFile(f.name);};
+          o.onclick=function(){openLocalLibraryFile(f.name);};
           var d=document.createElement("button"); d.textContent="🗑";
           d.onclick=function(){
-            if(!window.confirm("删除「"+f.name+"」及其全部历史版本？"))return;
-            fetch("/api/file?name="+encodeURIComponent(f.name),{method:"DELETE"}).then(function(){showStart();});
+            if(!window.confirm("从本地文件库删除「"+f.name+"」及其全部历史版本？"))return;
+            LocalStore.deleteFile(f.name).then(function(){showStart();});
           };
           row.appendChild(b); row.appendChild(s); row.appendChild(o); row.appendChild(d);
           fl.appendChild(row);
@@ -1259,7 +1322,7 @@ function showStart(){
       }).catch(function(){});
     }
   }
-  if(!offline){
+  if(!offline&&location.protocol!=="file:"){
     fetch("犀码互联商业地图.json").then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
       var b=document.createElement("button");
       b.textContent="📄 打开示例「犀码互联商业地图」";
@@ -1270,7 +1333,7 @@ function showStart(){
 }
 function hideStart(){ var st=document.getElementById("start"); if(st)st.classList.add("off"); setInEditor(true); }
 function newMap(){
-  if(nodes.length>1&&!window.confirm("新建会替换当前这张图（服务器存档也会被覆盖）。要先「⬇ 导出」备份吗？"))return;
+  if(nodes.length>1&&!window.confirm("新建会替换当前这张图。要先「💾 保存」或「⬇ 导出」备份吗？"))return;
   if(nodes.length===0&&savedDoc&&savedDoc.dirty&&!window.confirm("新建会覆盖上次未保存的断点草稿，确定新建空白图吗？"))return;
   clearUndo();
   nodes=[];seq=1;rootId=null;sel=null;
@@ -1281,9 +1344,10 @@ function newMap(){
   setTimeout(function(){ if(rootId)startEdit(rootId); },60);
 }
 function init(){
-  if(INITIAL){                        // 单文件离线版：数据内嵌，完全不连服务器
+  if(INITIAL){                        // 单文件离线版：数据内嵌，完全本地运行
     offline=true; curName=null; curLocalName=null; dirty=false;
     var bf=document.getElementById("bFiles"); if(bf)bf.style.display="none";
+    var bh=document.getElementById("bHist"); if(bh)bh.style.display="none";
     var offCkpt=parseLocal();
     if(offCkpt&&offCkpt.nodes&&offCkpt.nodes.length&&(offCkpt.dirty||offCkpt.inEditor)){
       savedDoc=offCkpt;
@@ -1291,77 +1355,17 @@ function init(){
     }else{
       bootFrom(INITIAL,"local");
     }
-    var nm=document.getElementById("spaceName"); if(nm)nm.textContent="离线";
     updateTitle();
     return;
   }
-  var k=(location.search.match(/[?&]k=([A-Za-z0-9]+)/)||[])[1];
-  if(k){
-    fetch("/api/space",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:k})})
-      .then(function(r){return r.json();})
-      .then(function(j){ if(!j.ok)throw new Error(j.err||"链接无效"); try{history.replaceState(null,"",location.pathname);}catch(_){} enterSpace(j.name); })
-      .catch(function(e){ showGate(e.message); });
-    return;
-  }
-  fetch("/api/space").then(function(r){ return r.status===401?null:(r.ok?r.json():null); }).then(function(s){
-    if(s&&s.name)enterSpace(s.name); else showGate("");
-  }).catch(function(){ showGate("连不上服务器"); });
-}
-function enterSpace(name){
-  spaceName=name;
-  var el=document.getElementById("spaceName"); if(el)el.textContent=name;
-  var g=document.getElementById("gate"); if(g)g.classList.add("off");
-  var done=function(srv){
-    savedDoc=pickLatestDraft(srv);
-    nodes=[];rootId=null;sel=null;render();showStart();
-  };
-  fetch("/api/draft").then(function(r){return r.status===204?null:(r.ok?r.json():null);}).then(done).catch(function(){done(null);});
-}
-function showGate(msg){
-  var g=document.getElementById("gate"); if(g)g.classList.remove("off");
-  var m=document.getElementById("gMsg"); if(m)m.textContent=(msg===undefined||msg===null)?"":msg;
-}
-function gateSubmit(){
-  var n=(document.getElementById("gName").value||"").trim();
-  var p=document.getElementById("gPin").value||"";
-  var msg=document.getElementById("gMsg"); msg.textContent="";
-  if(!n){msg.textContent="请填名字";return;}
-  if(p.length<4){msg.textContent="口令至少 4 位";return;}
-  msg.textContent="进入中…";
-  fetch("/api/space",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,pin:p})})
-    .then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
-    .then(function(x){
-      if(!x.j.ok)throw new Error(x.j.err||("HTTP "+x.status));
-      msg.textContent="";
-      enterSpace(x.j.name);
-      if(x.j.migrated&&x.j.migrated.length)toast("已把原来的图搬进你的空间");
-      else if(x.j.created)toast("已创建你的空间："+x.j.name);
-    })
-    .catch(function(e){ msg.textContent=e.message; });
-}
-function gateLink(){
-  var v=(document.getElementById("gLink").value||"").trim();
-  var m=v.match(/[?&]k=([A-Za-z0-9]+)/); if(m)v=m[1];
-  var msg=document.getElementById("gMsg"); msg.textContent="";
-  if(!v){msg.textContent="请粘贴专属链接或令牌";return;}
-  fetch("/api/space",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:v})})
-    .then(function(r){return r.json();})
-    .then(function(j){ if(!j.ok)throw new Error(j.err||"链接无效"); msg.textContent=""; enterSpace(j.name); })
-    .catch(function(e){ msg.textContent=e.message; });
-}
-function openSpace(){
-  var el=document.getElementById("space"); if(!el)return;
-  el.classList.add("on");
-  var s=document.getElementById("spName"); if(s)s.textContent=spaceName||"—";
-  fetch("/api/space/link").then(function(r){return r.json();}).then(function(j){
-    var i=document.getElementById("spLink"); if(i)i.value=(j&&j.url)||"";
-  }).catch(function(){});
+  savedDoc=parseLocal();
+  nodes=[];rootId=null;sel=null;render();showStart();
 }
 
-/* ---------- 文件库 / 保存 / 历史版本 ---------- */
+/* ---------- 本地文件库 / 保存 / 历史版本 ---------- */
 function updateTitle(){
   var el=document.querySelector("#toolbar .brand small"); if(!el)return;
-  var base=offline?"离线单文件 · 改完用 ⬇ 导出到本地保存":(curName?"文件："+curName:(curLocalName?"本机文件："+curLocalName:"工作台 · 打开即空白 / 可拖入"));
+  var base=offline?"离线单文件 · 改完用 ⬇ 导出到本地":(curName?"本地库："+curName:(curLocalName?"磁盘文件："+curLocalName:"本地工作台 · 数据仅存本机浏览器"));
   el.textContent=base+(dirty?" · 未保存":"");
 }
 function toast(msg){
@@ -1370,24 +1374,27 @@ function toast(msg){
   clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("on");},2400);
 }
 function baseName(){ return (curName||curLocalName||"思维导图").replace(/\.(mmap|json)$/i,""); }
-function openServerFile(name){
-  fetch("/api/file?name="+encodeURIComponent(name)).then(function(r){ if(!r.ok)throw new Error("打不开（HTTP "+r.status+"）"); return r.json(); })
-    .then(function(d){ bootFrom(d,"server",name); })
-    .catch(function(e){ alert("打开失败："+e.message); });
+function openLocalLibraryFile(name){
+  LocalStore.getFile(name).then(function(d){
+    if(!d)throw new Error("文件不存在");
+    bootFrom(d,"library",name);
+  }).catch(function(e){ alert("打开失败："+e.message); });
 }
-function saveFileToServer(name){
+function saveFileToLibrary(name){
   dirty=false; setStatus("saving"); updateTitle();
-  var json=JSON.stringify(payload());
-  fetch("/api/file?name="+encodeURIComponent(name),{method:"POST",headers:{"Content-Type":"application/json"},body:json})
-    .then(function(r){ return r.json().then(function(j){ if(!r.ok||!j.ok)throw new Error((j&&j.err)||("HTTP "+r.status)); return j; }); })
-    .then(function(j){
-      curName=name; curLocalName=null; dirty=false; lastSnap=Date.now();
-      setStatus("saved"); updateTitle();
-      writeLocalCheckpoint(json);
-      try{ fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:json}); }catch(_){}
-      toast("已保存到服务器："+name+(j.snapshot?"（已留快照）":""));
-    })
-    .catch(function(e){ dirty=true; setStatus("error"); updateTitle(); alert("保存失败："+e.message); });
+  var doc=payload();
+  doc.name=name; doc.dirty=false;
+  var json=JSON.stringify(doc);
+  LocalStore.saveFile(name,doc,true).then(function(snap){
+    curName=name; curLocalName=null; dirty=false; lastSnap=Date.now();
+    setStatus("saved"); updateTitle();
+    writeLocalCheckpoint(json);
+    savedDoc=doc;
+    toast("已保存到本地文件库："+name+(snap?"（已留历史快照）":""));
+  }).catch(function(e){
+    dirty=true; setStatus("error"); updateTitle();
+    alert("保存失败："+(e&&e.message||e));
+  });
 }
 function saveToLocal(name){
   var target=name||baseName()+".mmap";
@@ -1398,19 +1405,17 @@ function saveToLocal(name){
   document.body.appendChild(a); a.click();
   setTimeout(function(){ try{document.body.removeChild(a);}catch(_){} URL.revokeObjectURL(a.href); },2000);
   setStatus("saved"); updateTitle();
-  var cjson=JSON.stringify(payload());
-  writeLocalCheckpoint(cjson);
-  syncDraftNet(cjson);
-  toast("已下载到本机："+target+"（浏览器不能直写原文件，用它覆盖即可）");
+  writeLocalCheckpoint(JSON.stringify(payload()));
+  toast("已下载到磁盘："+target+"（浏览器不能直写原磁盘文件，用它覆盖即可）");
 }
 function saveAs(){
-  var v=window.prompt("保存到服务器文件库，文件名：", baseName());
+  var v=window.prompt("保存到本机文件库，文件名：", baseName());
   if(v===null)return; v=v.trim(); if(!v)return;
-  saveFileToServer(/\.mmap$/i.test(v)?v:v+".mmap");
+  saveFileToLibrary(/\.mmap$/i.test(v)?v:v+".mmap");
 }
 function manualSave(){
   if(offline){ saveToLocal(baseName()+".mmap"); return; }
-  if(curName){ saveFileToServer(curName); return; }
+  if(curName){ saveFileToLibrary(curName); return; }
   if(curLocalName){ saveToLocal(curLocalName); return; }
   saveAs();
 }
@@ -1425,11 +1430,10 @@ function openHistory(){
   if(!el||!list)return;
   var name=curName||null;
   el.classList.add("on");
-  t.textContent="历史版本 · "+(name||"未命名图（未保存过）");
-  if(!name){ list.innerHTML='<div class="empty">这张图还没存成文件，没有历史版本。<br>先点「💾 云端保存」给它起个名字。</div>'; return; }
+  t.textContent="本地历史版本 · "+(name||"未命名图（未保存过）");
+  if(!name){ list.innerHTML='<div class="empty">这张图还没存进本地文件库，没有历史版本。<br>先点「💾 保存」给它起个名字。</div>'; return; }
   list.innerHTML='<div class="empty">加载中…</div>';
-  fetch("/api/history?name="+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(j){
-    var items=(j&&j.items)||[];
+  LocalStore.listHistory(name).then(function(items){
     if(!items.length){ list.innerHTML='<div class="empty">还没有历史版本。</div>'; return; }
     list.innerHTML="";
     items.forEach(function(it){
@@ -1441,18 +1445,16 @@ function openHistory(){
       tt.appendChild(sm);
       var rb=document.createElement("button"); rb.textContent="恢复"; rb.className="primary";
       rb.onclick=function(){
-        if(!window.confirm("把画布换成这份历史版本？（当前改动会先自动存草稿）"))return;
-        fetch("/api/history?name="+encodeURIComponent(name)+"&ts="+encodeURIComponent(it.ts))
-          .then(function(r){ if(!r.ok)throw new Error("HTTP "+r.status); return r.json(); })
-          .then(function(d){
-            save(); bootFrom(d,"server",curName);
-            dirty=true; setStatus("dirty"); updateTitle(); closeHistory();
-            toast("已恢复到画布（还没写进文件，点「💾 云端保存」确认）");
-          })
-          .catch(function(e){ alert("恢复失败："+e.message); });
+        if(!window.confirm("把画布换成这份历史版本？（当前改动会先自动存断点）"))return;
+        LocalStore.getHistoryItem(name,it.ts).then(function(doc){
+          if(!doc)throw new Error("快照不存在");
+          save(); bootFrom(doc,"library",curName);
+          dirty=true; setStatus("dirty"); updateTitle(); closeHistory();
+          toast("已恢复到画布（点「💾 保存」确认覆盖原文件）");
+        }).catch(function(e){ alert("恢复失败："+e.message); });
       };
       var db=document.createElement("button"); db.textContent="🗑";
-      db.onclick=function(){ fetch("/api/history?name="+encodeURIComponent(name)+"&ts="+encodeURIComponent(it.ts),{method:"DELETE"}).then(function(){openHistory();}); };
+      db.onclick=function(){ LocalStore.deleteHistoryItem(name,it.ts).then(function(){openHistory();}); };
       row.appendChild(tt); row.appendChild(rb); row.appendChild(db);
       list.appendChild(row);
     });
@@ -1537,15 +1539,28 @@ function toXmind(){
   ]);
 }
 function toHtml(){
+  var finishHtml=function(src){
+    var json=JSON.stringify(payload());
+    var out=src.replace(/^var INITIAL=[^\n]*/m, "var INITIAL="+json+";  // 单文件离线版：数据内嵌，完全本地运行");
+    download(baseName()+".html",out,"text/html");
+    closeExport(); toast("已导出单文件 HTML（双击即可离线打开）");
+  };
+  var fallbackDomHtml=function(){
+    var clone=document.documentElement.cloneNode(true);
+    var clrIds=["nodes","edgeLayer","links","levelbar","files","resumeBox","quick","histList"];
+    clrIds.forEach(function(id){var el=clone.querySelector("#"+id);if(el)el.innerHTML="";});
+    ["history","export","help","notes","toast","dropmask"].forEach(function(id){
+      var el=clone.querySelector("#"+id);if(el)el.classList.remove("on");
+    });
+    var st=clone.querySelector("#start");if(st)st.classList.remove("off");
+    var ss=clone.querySelector("#savestate");if(ss)ss.textContent="";
+    finishHtml("<!doctype html>\n"+clone.outerHTML);
+  };
+  if(location.protocol==="file:"){fallbackDomHtml();return;}
   var urls=["index.html","/index.html"];
   var tryFetch=function(i){
-    if(i>=urls.length){ alert("导出 html 失败：取不到页面源码"); return; }
-    fetch(urls[i],{cache:"no-store"}).then(function(r){ if(!r.ok)throw 0; return r.text(); }).then(function(src){
-      var json=JSON.stringify(payload());
-      var out=src.replace(/^var INITIAL=[^\n]*/m, "var INITIAL="+json+";  // 单文件离线版：数据内嵌，不连服务器");
-      download(baseName()+".html",out,"text/html");
-      closeExport(); toast("已导出单文件 HTML（双击即可离线打开）");
-    }).catch(function(){ tryFetch(i+1); });
+    if(i>=urls.length){ fallbackDomHtml(); return; }
+    fetch(urls[i],{cache:"no-store"}).then(function(r){ if(!r.ok)throw 0; return r.text(); }).then(finishHtml).catch(function(){ tryFetch(i+1); });
   };
   tryFetch(0);
 }
@@ -1561,7 +1576,67 @@ function doExport(fmt){
   closeExport(); toast("已导出 "+n+"."+fmt);
 }
 
-/* ---------- 导入 ---------- */
+/* ---------- 导入（纯前端本地解析） ---------- */
+function unzipBrowser(buf){
+  var u8=new Uint8Array(buf),dv=new DataView(buf);
+  var eocd=-1,stop=Math.max(0,u8.length-22-65535);
+  for(var i=u8.length-22;i>=stop;i--){
+    if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0)return Promise.reject(new Error("不是有效的 zip/xmind 文件"));
+  var count=dv.getUint16(eocd+10,true);
+  var off=dv.getUint32(eocd+16,true);
+  var dec=new TextDecoder("utf-8"),files={},tasks=[];
+  for(var idx=0;idx<count;idx++){
+    if(off+46>u8.length||dv.getUint32(off,true)!==0x02014b50)return Promise.reject(new Error("zip 中央目录损坏"));
+    var method=dv.getUint16(off+10,true);
+    var compSize=dv.getUint32(off+20,true);
+    var nameLen=dv.getUint16(off+28,true);
+    var extraLen=dv.getUint16(off+30,true);
+    var commentLen=dv.getUint16(off+32,true);
+    var localOff=dv.getUint32(off+42,true);
+    var entryName=dec.decode(u8.subarray(off+46,off+46+nameLen));
+    if(localOff+30<u8.length&&dv.getUint32(localOff,true)===0x04034b50){
+      var lnameLen=dv.getUint16(localOff+26,true);
+      var lextraLen=dv.getUint16(localOff+28,true);
+      var start=localOff+30+lnameLen+lextraLen;
+      var comp=u8.subarray(start,start+compSize);
+      (function(nm,mth,bytes){
+        if(mth===0){
+          files[nm]=bytes.slice();
+        }else if(mth===8&&typeof DecompressionStream!=="undefined"){
+          tasks.push(
+            new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")))
+              .arrayBuffer()
+              .then(function(ab){files[nm]=new Uint8Array(ab);})
+              .catch(function(){})
+          );
+        }
+      })(entryName,method,comp);
+    }
+    off+=46+nameLen+extraLen+commentLen;
+  }
+  return Promise.all(tasks).then(function(){return files;});
+}
+function xmindToTreeBrowser(buf){
+  return unzipBrowser(buf).then(function(files){
+    var key=Object.keys(files).filter(function(n){return /content\.json$/i.test(n);})[0];
+    if(!key)throw new Error("xmind 里没有 content.json（或浏览器不支持 deflate 解压）");
+    var parsed=JSON.parse(new TextDecoder("utf-8").decode(files[key]));
+    var sheets=Array.isArray(parsed)?parsed:[parsed];
+    var rootTopic=(sheets[0]&&(sheets[0].rootTopic||sheets[0].topic))||null;
+    if(!rootTopic)throw new Error("xmind 结构无法识别");
+    var conv=function(t){
+      var node={text:String(t.title||"(未命名)")};
+      var plain=t.notes&&t.notes.plain&&t.notes.plain.content;
+      if(plain)node.note=String(plain);
+      var ch=(t.children&&t.children.attached)||[];
+      if(ch.length)node.children=ch.map(conv);
+      return node;
+    };
+    return conv(rootTopic);
+  });
+}
 function mdToTree(text){
   // 支持两种写法：# 标题分层，或纯缩进/列表大纲；标题下的列表项自动作为它的子节点
   var lines=text.replace(/\r/g,"").split("\n").filter(function(l){return l.replace(/\s/g,"")!=="";});
@@ -1605,19 +1680,20 @@ function openFile(f){
   var name=orig.toLowerCase();
   var finish=function(tree){applyTree(tree);};
   if(/\.xmind$/.test(name)){
-    f.arrayBuffer().then(function(buf){
-      return fetch("/api/import",{method:"POST",body:buf}).then(function(r){return r.json();});
-    }).then(function(j){
-      if(!j||!j.ok)throw new Error((j&&j.err)||"xmind 解析失败");
-      finish(j.tree);
-    }).catch(function(e){alert("导入失败："+e.message);});
+    f.arrayBuffer().then(xmindToTreeBrowser)
+      .then(finish)
+      .catch(function(e){alert("导入失败："+e.message);});
     return;
   }
   f.text().then(function(txt){
     try{
       if(/\.(md|markdown|txt)$/.test(name))return finish(mdToTree(txt));
-      var m=txt.match(/var INITIAL=(\{[\s\S]*?\n\]\});/);
-      if(m)return finish(new Function("return "+m[1])());
+      var m=txt.match(/^var INITIAL=(\{[^\n]*\});/m)||txt.match(/var INITIAL=(\{[\s\S]*?\n\]\});/);
+      if(m){
+        var p0=JSON.parse(m[1]);
+        if(p0&&p0.nodes){bootFrom(p0,"local",orig);return;}
+        return finish(p0);
+      }
       var p=JSON.parse(txt);
       if(p&&p.nodes){bootFrom(p,"local",orig);return;}
       finish(p);
@@ -1883,10 +1959,12 @@ document.getElementById("notesClose").onclick=closeNotes;
 var $=function(id){return document.getElementById(id);};
 $("bNew").onclick=newMap;
 $("bFiles").onclick=function(){
-  flushCheckpoint(true);
+  flushCheckpoint();
   savedDoc=nodes.length?payload(true):savedDoc;
   showStart();
 };
+$("bSave").onclick=manualSave;
+$("bHist").onclick=toggleHistory;
 $("bUndo").onclick=undo;
 $("bRedo").onclick=redo;
 $("sNew").onclick=newMap;
@@ -1913,38 +1991,21 @@ document.getElementById("export").onclick=function(e){ if(e.target===this)closeE
 Array.prototype.forEach.call(document.querySelectorAll("#export .exlist button"),function(b){
   b.onclick=function(){ doExport(b.getAttribute("data-fmt")); };
 });
-$("bSpace").onclick=openSpace;
-document.getElementById("spClose").onclick=function(){document.getElementById("space").classList.remove("on");};
-document.getElementById("spCopy").onclick=function(){
-  var i=document.getElementById("spLink"); i.select();
-  try{ document.execCommand("copy"); toast("链接已复制"); }catch(_){ toast("复制失败，请手动选中复制"); }
-};
-document.getElementById("spLeave").onclick=function(){
-  if(!window.confirm("退出后本机要重新输名字+口令才能进来（你的图还在服务器上）。继续？"))return;
-  flushCheckpoint(true);
-  suppressUnload=true;
-  fetch("/api/space/leave",{method:"POST"}).then(function(){location.reload();});
-};
-document.getElementById("gGo").onclick=gateSubmit;
-document.getElementById("gLinkGo").onclick=gateLink;
-document.getElementById("gPin").addEventListener("keydown",function(e){ if(e.key==="Enter")gateSubmit(); });
-document.getElementById("gName").addEventListener("keydown",function(e){ if(e.key==="Enter")document.getElementById("gPin").focus(); });
-document.getElementById("space").onclick=function(e){ if(e.target===this)this.classList.remove("on"); };
 $("bImport").onclick=function(){$("fileIn").click();};
 $("bHelp").onclick=function(){$("help").classList.add("on");};
 $("bHelpClose").onclick=function(){$("help").classList.remove("on");};
 $("help").onclick=function(e){if(e.target===this)this.classList.remove("on");};
 
-window.addEventListener("pagehide",function(){flushCheckpoint(true);});
-document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")flushCheckpoint(true);});
+window.addEventListener("pagehide",function(){flushCheckpoint();});
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")flushCheckpoint();});
 window.addEventListener("beforeunload",function(e){
-  flushCheckpoint(true);
+  flushCheckpoint();
   if(!suppressUnload&&dirty&&isInEditor()){
     e.preventDefault();
     e.returnValue="";
   }
 });
-setInterval(function(){if(dirty&&isInEditor())flushCheckpoint(false);},15000);
+setInterval(function(){if(dirty&&isInEditor())flushCheckpoint();},15000);
 
 init();
 })();
