@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>犀码互联 · 思维导图工作台</title>
+<title>多宝工具·思维导图</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#f5f7fb;color:#1b2333;
@@ -26,17 +26,21 @@ button.on{background:#0e9b6c;border-color:#0e9b6c;color:#fff}
  background-color:#f7f9fd;background-image:radial-gradient(#dde4f0 1px,transparent 1px);background-size:24px 24px}
 #canvas.pan{cursor:grabbing}
 canvas.linking,#canvas.linking{cursor:crosshair}
-#edges{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#edges,#linkHandles{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#linkHandles{z-index:105}
 #nodes{position:absolute;left:0;top:0;transform-origin:0 0}
 .node{position:absolute;width:max-content;max-width:290px;padding:9px 13px;border-radius:11px;background:#fff;
  border:1px solid #e3e9f4;border-left:4px solid #888;box-shadow:0 1px 2px rgba(24,36,66,.07);
  font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;cursor:grab;user-select:none}
+.node.side-left{border-left:1px solid #e3e9f4;border-right:4px solid #888}
 .node.root{background:#22304d;color:#fff;border-color:#22304d;font-size:15px;font-weight:700;padding:12px 18px;border-radius:13px;max-width:320px;width:max-content}
 .node.sel{box-shadow:0 0 0 2px #2b58d4,0 6px 18px rgba(43,88,212,.25);z-index:80}
 .node:hover{z-index:90}
 .node.editing{cursor:text;user-select:text;-webkit-user-select:text;z-index:95;box-shadow:0 0 0 2px #2b58d4,0 8px 22px rgba(43,88,212,.22)}
 .node.dragging{opacity:.86;box-shadow:0 10px 28px rgba(24,36,66,.22);z-index:110}
 .node.drop{box-shadow:0 0 0 3px #0e9b6c,0 8px 22px rgba(14,155,108,.3)}
+.node.drop-left{box-shadow:-4px 0 0 3px #0e9b6c,0 8px 22px rgba(14,155,108,.3)}
+.node.drop-right{box-shadow:4px 0 0 3px #0e9b6c,0 8px 22px rgba(14,155,108,.3)}
 .node.linkto{box-shadow:0 0 0 3px #e0772f,0 8px 22px rgba(224,119,47,.3)}
 #reorderLine{position:absolute;left:0;top:0;height:3px;border-radius:99px;background:#2b58d4;
  box-shadow:0 0 0 2px rgba(43,88,212,.18);pointer-events:none;z-index:120;display:none}
@@ -49,11 +53,14 @@ canvas.linking,#canvas.linking{cursor:crosshair}
  background:#fff;border:1px solid #d9e1ee;border-radius:99px;box-shadow:0 2px 8px rgba(24,36,66,.12);
  opacity:0;pointer-events:none;transition:opacity .12s ease}
 .node .node-acts::before{content:"";position:absolute;left:-10px;top:-6px;right:-4px;bottom:-6px;z-index:-1}
+.node.side-left>.node-acts,.node .node-acts.left-acts{left:auto;right:calc(100% + 5px)}
+.node.side-left>.node-acts::before,.node .node-acts.left-acts::before{left:-4px;right:-10px}
 .node:hover>.node-acts,.node.sel>.node-acts,.node.collapsed>.node-acts{opacity:1;pointer-events:auto}
 .node.editing>.node-acts{display:none}
 .node .node-acts>div{display:flex;align-items:center;justify-content:center;height:26px;cursor:pointer;
  font-size:13px;font-weight:700;white-space:nowrap;transition:background .12s,color .12s}
 .node .node-acts .tgl{min-width:28px;padding:0 7px;color:#4a5876;border-radius:99px 0 0 99px;font-size:19px;line-height:1}
+.node.side-left>.node-acts .tgl{border-radius:0 99px 99px 0}
 .node .node-acts .tgl:hover{background:#eef3ff;color:#2b58d4}
 .node .node-acts .col-cnt{padding:0 9px;color:#2b58d4;background:#eef3ff;font-size:12.5px;border-radius:99px;gap:3px}
 .node .node-acts .col-cnt .tri{font-size:17px;line-height:1}
@@ -62,21 +69,51 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 .node.root .node-acts .col-cnt:hover{background:#2b58d4}
 .node .node-acts .add{min-width:26px;padding:0 7px;color:#0e9b6c;border-radius:0 99px 99px 0;font-size:14px;
  border-left:1px solid #e4e9f2}
+.node.side-left>.node-acts .add,.node .node-acts.left-acts .add{border-left:0;border-right:1px solid #e4e9f2;border-radius:99px 0 0 99px}
 .node .node-acts .add:hover{background:#0e9b6c;color:#fff}
-.node .node-acts.leaf .add{border-left:0;border-radius:99px}
+.node .node-acts.leaf .add{border-left:0;border-right:0;border-radius:99px}
 .node.collapsed .node-acts .add{display:none}
 .node.collapsed:hover .node-acts .add,.node.collapsed.sel .node-acts .add{display:flex}
 .node.collapsed:hover .node-acts .col-cnt,.node.collapsed.sel .node-acts .col-cnt{border-radius:99px 0 0 99px}
+.node.side-left.collapsed:hover .node-acts .col-cnt,.node.side-left.collapsed.sel .node-acts .col-cnt{border-radius:0 99px 99px 0}
 .node .label{display:block;outline:none;border-radius:4px}
 .node.editing .label{cursor:text;user-select:text;-webkit-user-select:text}
 .node .label:focus{background:rgba(43,88,212,.08)}
 .node .mk{position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.node.side-left .mk{right:auto;left:-4px}
 .node .nt{position:absolute;right:6px;bottom:2px;font-size:10px;color:#a9b4c8;letter-spacing:-1px}
 .node.root .nt{color:#93a4c4}
 .node .td{display:inline-block;margin-right:5px;font-size:12px}
 .node.done .label{text-decoration:line-through;opacity:.55}
-#links path{fill:none;stroke-width:1.7;stroke-dasharray:5 4;opacity:.8}
-#links path.hit{stroke:transparent;stroke-width:14;stroke-dasharray:none;pointer-events:stroke;cursor:pointer}
+#links path{fill:none;stroke-width:1.9;stroke-dasharray:6 4;opacity:.85;transition:opacity .12s}
+#links path.solid{stroke-dasharray:none}
+#links path.sel-glow{fill:none;stroke-width:8;stroke-dasharray:none;opacity:.18}
+#links path.sel-line{stroke-width:2.6;opacity:1}
+#links path.hit{stroke:transparent;stroke-width:20;stroke-dasharray:none;pointer-events:stroke;cursor:pointer}
+#links polygon.lk-arr{pointer-events:none}
+#linkHandles .lh-guide{fill:none;stroke:#94a3b8;stroke-dasharray:3 3;pointer-events:none}
+#linkHandles .lh-hit{fill:transparent;stroke:none;cursor:grab;pointer-events:all}
+#linkHandles .lh-hit.curve{cursor:move}
+#linkHandles .lh-pt{fill:#fff;stroke:#2b58d4;pointer-events:none}
+#linkHandles .lh-curve{fill:#2b58d4;stroke:#fff;pointer-events:none}
+#linkHandles .lh-preview{fill:none;stroke:#e0772f;stroke-dasharray:6 4;pointer-events:none}
+#linkHandles .lh-preview-arr{fill:#e0772f;pointer-events:none}
+#linkbar{position:fixed;bottom:46px;left:50%;transform:translateX(-50%);z-index:35;display:none;align-items:center;gap:7px;flex-wrap:wrap;
+ max-width:95vw;padding:7px 12px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+ border:1px solid #d7e1f1;border-radius:12px;box-shadow:0 10px 28px rgba(20,30,60,.16);font-size:12px;color:#33405c}
+#linkbar.on{display:flex}
+#linkbar .lb-grp{display:flex;align-items:center;gap:4px}
+#linkbar .lb-sep{width:1px;height:18px;background:#e4e9f2}
+#linkbar input[type=range]{width:86px;accent-color:#2b58d4;cursor:pointer}
+#linkbar input[type=color]{width:22px;height:22px;border:1px solid #d9e1ee;border-radius:6px;padding:0;background:#fff;cursor:pointer}
+#linkbar button{padding:4px 8px;font-size:12px}
+#linkbar button.act{background:#2b58d4;border-color:#2b58d4;color:#fff}
+#linkbar button.danger{color:#d94a44;border-color:#f2c9c7}
+#linkbar button.danger:hover{background:#fff1f0;border-color:#d94a44}
+#linkModeBanner{position:fixed;top:64px;right:12px;z-index:21;display:none;align-items:center;gap:8px;
+ padding:6px 12px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;
+ font-size:12px;font-weight:500;box-shadow:0 4px 14px rgba(14,155,108,.12)}
+#linkModeBanner.on{display:flex}
 #hint{position:fixed;left:12px;bottom:10px;font-size:11.5px;color:#8b96ab;z-index:20;pointer-events:none;max-width:66vw;line-height:1.7}
 #zoombar{position:fixed;right:12px;bottom:12px;display:flex;gap:6px;z-index:20}
 #zoombar button{width:34px;padding:6px 0;text-align:center}
@@ -125,22 +162,28 @@ canvas.linking,#canvas.linking{cursor:crosshair}
 #start .row button{padding:9px 14px;font-size:13.5px}
 #start .quick{margin-top:12px;font-size:12.5px;color:#8b96ab}
 #start .quick button{margin:4px 6px 0 0;font-size:12px;padding:5px 9px}
-#start .files{margin-top:14px;border-top:1px solid #eef2f8;padding-top:12px}
-#start .files h4{margin:0 0 8px;font-size:12px;color:#8b96ab;font-weight:600;letter-spacing:.3px}
-#start .files .fi{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid #eef2f8;border-radius:9px;margin-bottom:6px;font-size:12.5px}
-#start .files .fi b{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#start .files .fi small{color:#8b96ab;white-space:nowrap;font-size:11.5px}
-#start .files .fi button{padding:4px 9px;font-size:11.5px}
-#history{position:fixed;top:54px;right:0;bottom:0;width:330px;max-width:88vw;background:#fff;border-left:1px solid #e4e9f2;box-shadow:-8px 0 24px rgba(20,30,60,.08);transform:translateX(105%);transition:transform .18s ease;z-index:26;display:flex;flex-direction:column}
-#history.on{transform:none}
-#history .hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #eef2f8;font-size:13px;font-weight:600}
-#history .hd span{flex:1}
-#history .list{flex:1;overflow:auto;padding:8px}
-#history .it{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid #eef2f8;border-radius:9px;margin-bottom:6px;font-size:12.5px}
-#history .it .t{flex:1;line-height:1.45}
-#history .it .t small{display:block;color:#8b96ab;font-size:11px}
-#history .it button{padding:4px 8px;font-size:11.5px}
-#history .empty{padding:26px 14px;text-align:center;color:#8b96ab;font-size:12.5px;line-height:1.9}
+#feedback{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:72;padding:20px}
+#feedback.on{display:flex}
+#feedback .box{background:#fff;border-radius:16px;padding:22px 24px;width:min(540px,94vw);max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(10,20,50,.35);font-size:13px}
+#feedback h3{margin:0 0 4px;font-size:16px}
+#feedback p.sub{margin:0 0 12px;color:#8b96ab;font-size:12px;line-height:1.6}
+#feedback .fb-types{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+#feedback .fb-types button{padding:5px 10px;font-size:12px;border-radius:8px}
+#feedback .fb-types button.act{background:#2b58d4;border-color:#2b58d4;color:#fff}
+#feedback textarea{width:100%;min-height:92px;border:1px solid #d9e1ee;border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;line-height:1.6;resize:vertical;outline:none}
+#feedback textarea:focus,#feedback input:focus{border-color:#2b58d4}
+#feedback input[type=text]{width:100%;margin-top:8px;border:1px solid #d9e1ee;border-radius:9px;padding:8px 11px;font:inherit;font-size:12.5px;outline:none}
+#feedback .fb-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+#feedback .fb-hist{margin-top:14px;border-top:1px solid #eef2f8;padding-top:12px}
+#feedback .fb-hist-hd{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;color:#6b7a94;font-weight:600}
+#feedback .fb-hist-hd span{flex:1}
+#feedback .fb-hist-hd button{padding:3px 8px;font-size:11.5px}
+#feedback .fb-it{padding:9px 11px;border:1px solid #eef2f8;border-radius:10px;margin-bottom:7px;background:#fafcff}
+#feedback .fb-it-top{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#8b96ab;margin-bottom:4px}
+#feedback .fb-it-tag{padding:1px 6px;border-radius:5px;background:#eef3ff;color:#2b58d4;font-weight:600;font-size:11px}
+#feedback .fb-it-txt{font-size:12.5px;color:#1b2333;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+#feedback .fb-it-del{margin-left:auto;border:0;background:transparent;color:#9aa5b8;padding:1px 5px;font-size:12px}
+#feedback .fb-it-del:hover{color:#d94a44;background:#fff1f0}
 #toast{position:fixed;left:50%;bottom:52px;transform:translate(-50%,12px);background:#22304d;color:#fff;font-size:12.5px;padding:8px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.18s;z-index:60;max-width:80vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #export{position:fixed;inset:0;background:rgba(16,24,44,.45);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
@@ -167,53 +210,88 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
 </head>
 <body>
 <div id="toolbar">
-  <div class="brand">犀码互联 · 思维导图<small>本地工作台 · 数据仅存本机浏览器</small></div>
+  <div class="brand">多宝工具·思维导图<small>本地工作台 · 数据仅存本机浏览器</small></div>
   <button id="bNew">＋ 新建</button>
-  <button id="bFiles" title="返回文件库 / 切换或新建导图">📂 文件</button>
-  <button id="bSave" title="保存到本机文件库 (Ctrl+S)">💾 保存</button>
-  <button id="bHist" title="查看本机历史版本">🕘 历史</button>
   <button id="bUndo" disabled title="回撤上一步 (Ctrl+Z)">↶ 回撤</button>
   <button id="bRedo" disabled title="重做 (Ctrl+Y)">↷ 重做</button>
   <button class="primary" id="bAdd">＋ 子节点</button>
-  <button id="bRename">✎ 改名</button>
+  <button id="bRename">✎ 编辑</button>
   <button id="bDel">🗑 删除</button>
   <button id="bNote">📝 备注</button>
   <span id="swatches" style="display:flex;gap:4px;align-items:center;padding:0 2px"></span>
   <button id="bTodo">☐ 待办</button>
-  <button id="bLink">🔗 连线</button>
+  <button id="bLink" title="进入/退出连线模式 (Alt+L)">🔗 连线</button>
   <span class="spacer"></span>
   <button id="bRelayout">⤢ 重排</button>
   <button id="bFit">⤡ 适应</button>
   <button id="bExport">⬇ 导出到本地</button>
   <button id="bImport">⬆ 本地导入</button>
+  <button id="bFeedback" title="意见与建议收集">💬 意见建议</button>
   <button id="bHelp">? 帮助</button>
   <span id="savestate" style="font-size:11.5px;color:#8b96ab;white-space:nowrap;padding:0 6px"></span>
 </div>
-<div id="canvas"><svg id="edges"><g id="edgeLayer"></g><g id="links"></g></svg><div id="nodes"></div><div id="reorderLine"><span>调整排序</span></div></div>
+<div id="canvas"><svg id="edges"><g id="edgeLayer"></g><g id="links"></g></svg><div id="nodes"></div><svg id="linkHandles"><g id="linkHandleLayer"></g></svg><div id="reorderLine"><span>调整排序</span></div></div>
 <input id="imeProxy" aria-hidden="true" autocomplete="off" style="position:fixed;left:-9999px;top:0;width:2px;height:18px;opacity:0;pointer-events:none;border:0;padding:0">
-<div id="hint">空白拖动＝平移 · 滚轮＝缩放 · 拖节点至同级间隙＝<b>调整排序</b> · 拖到其他节点＝更换上级 · 单击选中直接打字＝整节点替换 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 回撤</div>
+<div id="hint">空白拖动＝平移 · 滚轮＝缩放 · 中心节点左右分支可互相拖动换边 · 拖节点至同级间隙＝<b>调整排序</b> · 拖到其他节点＝更换上级 · <kbd>Ctrl</kbd>+<kbd>Z</kbd> 回撤</div>
 <div id="zoombar"><button id="bZout">－</button><button id="bZin">＋</button></div>
 <div id="levelbar"></div>
+<div id="linkModeBanner"><span>🔗 连线模式：点/拖节点创建连线 · 点已有连线可调位置/曲率/箭头/颜色/删除</span><button id="bExitLinkMode">退出连线</button></div>
+<div id="linkbar">
+  <span style="font-weight:600;color:#22304d">连线设置</span>
+  <span class="lb-sep"></span>
+  <span class="lb-grp" id="lbColors"></span>
+  <input type="color" id="lbColorPick" title="自定义连线颜色">
+  <span class="lb-sep"></span>
+  <span class="lb-grp" id="lbArrows">
+    <button type="button" data-arrow="end" title="单向箭头">→</button>
+    <button type="button" data-arrow="both" title="双向箭头">↔</button>
+    <button type="button" data-arrow="start" title="反向箭头">←</button>
+    <button type="button" data-arrow="none" title="无箭头">无</button>
+  </span>
+  <button type="button" id="lbDashed" title="切换虚线/实线">虚线</button>
+  <span class="lb-sep"></span>
+  <label class="lb-grp">曲率 <input type="range" id="lbCurve" min="-1.2" max="1.2" step="0.02" value="0.16"></label>
+  <button id="lbStraight" title="拉直连线">拉直</button>
+  <button id="lbResetPos" title="恢复默认起止端点位置">重置端点</button>
+  <span class="lb-sep"></span>
+  <button class="danger" id="lbDelete">🗑 删除</button>
+  <button id="lbClose" title="取消选中连线">✕</button>
+</div>
 <div id="ctxmenu"></div>
 <div id="start"><div class="sb">
-  <h2>思维导图工作台</h2>
+  <h2>多宝工具·思维导图</h2>
   <p class="sub">选择继续上次编辑、新建空白导图，或打开其他文件。</p>
   <div id="resumeBox"></div>
-  <div id="drop">把 <b>.mmap</b> / <b>.xmind</b> / <b>.md</b> / <b>.json</b> / <b>.html</b> 文件<b>拖到这里</b><br>（也可以点下面的「打开本机文件」或从下方列表选择）</div>
+  <div id="drop">把 <b>.mmap</b> / <b>.xmind</b> / <b>.md</b> / <b>.json</b> / <b>.html</b> 文件<b>拖到这里</b><br>（也可以点下面的「打开本机文件」）</div>
   <div class="row">
     <button class="primary" id="sNew">＋ 新建空白图</button>
     <button id="sOpen">📂 打开本机文件…</button>
   </div>
-  <div id="files" class="files"></div>
   <div class="quick" id="quick"></div>
 </div></div>
 <div id="dropmask">松手导入</div>
 <div id="notes">
   <div class="hd"><span id="notesTitle">备注</span><button id="notesClose">✕</button></div>
-  <textarea id="notesArea" placeholder="给这个节点写备注：理由、依据、待确认项、下一步…&#10;（自动保存，无需导出）"></textarea>
+  <textarea id="notesArea" placeholder="给这个节点写备注：理由、依据、待确认项、下一步…&#10;（自动暂存本机，无需导出）"></textarea>
   <div class="ft" id="notesFt">选中一个节点后在这里写备注</div>
 </div>
-<div id="history"><div class="hd"><span id="histTitle">历史版本</span><button id="histClose">✕</button></div><div class="list" id="histList"></div></div>
+<div id="feedback"><div class="box">
+  <h3>💬 意见与建议收集</h3>
+  <p class="sub">欢迎告诉我们您希望增加的功能、发现的问题或体验改进建议。记录保存在本机，可一键复制或导出发给我们。</p>
+  <div class="fb-types" id="fbTypes">
+    <button type="button" class="act" data-type="功能建议">功能建议</button>
+    <button type="button" data-type="问题反馈">问题反馈</button>
+    <button type="button" data-type="体验优化">体验优化</button>
+    <button type="button" data-type="其他">其他</button>
+  </div>
+  <textarea id="fbText" placeholder="请输入您的意见或建议…"></textarea>
+  <input type="text" id="fbContact" placeholder="联系方式（选填，如邮箱 / 微信）">
+  <div class="fb-actions">
+    <button id="fbClose">关闭</button>
+    <button class="primary" id="fbSubmit">提交建议</button>
+  </div>
+  <div class="fb-hist" id="fbHist"></div>
+</div></div>
 <div id="toast"></div>
 
 <div id="export"><div class="box">
@@ -233,24 +311,23 @@ code{background:#f4f6fb;border-radius:4px;padding:1px 5px;font-size:12px}
   <table>
     <tr><td>移动节点</td><td>按住节点拖动（子节点一起动）</td></tr>
     <tr><td><b>调整排序</b></td><td>按住节点<b>拖到同级节点的上方/下方间隙</b>（出现<b style="color:#2b58d4">蓝色插入线</b>）松手即可重排顺序；也可用 <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> 或右键菜单</td></tr>
-    <tr><td><b>更换上级</b></td><td>把节点<b>拖到另一个节点中心</b>松手 → 连整棵子树改挂到它下面；悬停时目标亮<b style="color:#0e9b6c">绿框</b>。不能拖到自己子孙上</td></tr>
-    <tr><td>加子节点 / 同级</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点右侧绿色 <b>＋</b></td></tr>
+    <tr><td><b>更换上级 / 左右换边</b></td><td>把节点<b>拖到另一个节点中心</b>松手 → 连整棵子树改挂到它下面；中心节点的一级分支可<b>直接拖到中心另一侧</b>自由换边</td></tr>
+    <tr><td>加子节点 / 左侧节点</td><td>选中后 <kbd>Tab</kbd> / <kbd>Enter</kbd>，或点节点外侧绿色 <b>＋</b>；悬停/选中中心节点点其左侧 <b>＋</b>（或 <kbd>Shift</kbd>+<kbd>Tab</kbd>）可在左边加分支</td></tr>
     <tr><td><b>直接输入替换</b></td><td><b>单击选中节点后直接打字</b>，将自动进入输入状态并全部替换该节点原内容</td></tr>
-    <tr><td>改名 / 局部选取</td><td>双击节点进入全选编辑；<b>单击文本</b>切入光标输入，<b>拖拽或双击词组</b>局部选取内容；<kbd>Enter</kbd> 确认</td></tr>
+    <tr><td>编辑 / 局部选取</td><td>双击节点或点「✎ 编辑」进入全选编辑；<b>单击文本</b>切入光标输入，<b>拖拽或双击词组</b>局部选取内容；<kbd>Enter</kbd> 确认</td></tr>
     <tr><td><b>回撤 / 重做</b></td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> 回撤上一步操作，<kbd>Ctrl</kbd>+<kbd>Y</kbd> 或 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> 重做（工具栏也提供按钮）</td></tr>
     <tr><td>删除</td><td>选中后 <kbd>Del</kbd>（含子节点，会先确认）</td></tr>
     <tr><td><b>备注</b></td><td><kbd>Alt</kbd>+<kbd>N</kbd> 或点「📝 备注」→ 右侧面板写细节；节点右下出现 <b>≡</b> 表示有备注</td></tr>
     <tr><td><b>标记颜色</b></td><td>点击工具栏色点标记或清除颜色</td></tr>
     <tr><td><b>待办</b></td><td><kbd>Alt</kbd>+<kbd>T</kbd> 或点「☐ 待办」循环：无 → 待办 ☐ → 进行中 ◐ → 完成 ☑</td></tr>
-    <tr><td><b>跨分支连线</b></td><td><kbd>Alt</kbd>+<kbd>L</kbd> 或点「🔗 连线」进入连线模式 → 点目标节点即连上；<b>点虚线可删除</b>；<kbd>Esc</kbd> 退出</td></tr>
-    <tr><td>折叠/展开</td><td>点节点右侧 <b>◂</b> 或蓝色 <b>▸数字</b> 徽章（或按 <kbd>Space</kbd>）；开启「逐层展开」后只展开该节点，子节点保持折叠；<b>右键节点</b>可选择展开方式</td></tr>
+    <tr><td><b>自由连线与箭头</b></td><td>点「🔗 连线」或按 <kbd>Alt</kbd>+<kbd>L</kbd> 进入连线模式（再点一次退出）：支持<b>点击或直接拖拽</b>连接两个节点；<b>点击任意连线</b>可选中它，拖动起止圆点调位置、拖动中间菱形或滑块调曲率，支持切换箭头（单向/双向/反向/无）、虚实线、颜色与删除</td></tr>
+    <tr><td>折叠/展开</td><td>点节点外侧折叠图标或数字徽章（或按 <kbd>Space</kbd>）；开启「逐层展开」后只展开该节点，子节点保持折叠；<b>右键节点</b>可选择展开方式</td></tr>
     <tr><td><b>一键按层级折叠</b></td><td>使用画布左上角「折叠子集」栏一键折叠指定层级的所有子集（或 <kbd>Alt</kbd>+<kbd>0</kbd>~<kbd>9</kbd>，<kbd>Alt</kbd>+<kbd>A</kbd> 全部展开）</td></tr>
     <tr><td>平移 / 缩放</td><td>空白处拖动 / 滚轮（或右下角 ＋－）</td></tr>
     <tr><td><b>新建</b></td><td>点「＋ 新建」清空画布，从「中心主题」开始（会先确认，防误覆盖）</td></tr>
-    <tr><td><b>打开 / 拖入</b></td><td>把 <code>.xmind</code> / <code>.md</code> / <code>.json</code> / <code>.html</code> <b>拖进窗口</b>松手，或点「📂 打开文件」</td></tr>
-    <tr><td><b>本地导入</b></td><td>点「⬆ 本地导入」，或把 <code>.xmind</code> / Markdown 大纲 <code>.md</code> / 本工具导出的 <code>.json</code> / 单文件 <code>.html</code> 拖进窗口</td></tr>
-    <tr><td><b>本地化与断点续存</b></td><td>无需登录，所有导图、文件库、历史版本与断点草稿均<b>100% 保存在本机浏览器</b>中；误关浏览器或刷新后重新打开会<b>提示选择「继续上次编辑 / 新建空白图 / 打开其他文件」</b>，有未保存改动时关闭标签也会拦截提醒</td></tr>
-    <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通（颜色/连线会丢）；<code>.html</code> 单文件离线版，双击就能看</td></tr>
+    <tr><td><b>本地导入</b></td><td>点「⬆ 本地导入」，或把 <code>.mmap</code> / <code>.xmind</code> / Markdown 大纲 <code>.md</code> / <code>.json</code> / 单文件 <code>.html</code> 拖进窗口</td></tr>
+    <tr><td><b>本地化与断点续存</b></td><td>无需登录，所有导图与断点草稿均<b>100% 自动暂存在本机浏览器</b>中；刷新或重新打开会<b>提示选择「继续上次编辑 / 新建空白图 / 打开本机文件」</b></td></tr>
+    <tr><td><b>导出格式</b></td><td>点「⬇ 导出到本地」选：<code>.mmap</code> 无损往返（工具原生，导回最准）；<code>.md</code> Markdown 大纲，<b>给人/给 AI 读最省事</b>，能导回（备注以引用块原样回来）；<code>.json</code> 通用 JSON；<code>.xmind</code> 与 XMind 桌面版互通；<code>.html</code> 单文件离线版，双击就能看</td></tr>
   </table>
   <div style="margin-top:14px;text-align:right"><button class="primary" id="bHelpClose">知道了</button></div>
 </div></div>
@@ -267,31 +344,38 @@ var TODO=["","todo","doing","done"], TODOICON={"":"","todo":"\u2610","doing":"\u
 var INITIAL=null;  // 打开即空白画布：图靠「新建 / 打开文件 / 拖入」产生
 
 var canvas=document.getElementById("canvas"),nodesEl=document.getElementById("nodes");
-var edgeLayer=document.getElementById("edgeLayer"),linkLayer=document.getElementById("links");
+var edgeLayer=document.getElementById("edgeLayer"),linkLayer=document.getElementById("links"),linkHandles=document.getElementById("linkHandleLayer");
 var notesEl=document.getElementById("notes"),notesArea=document.getElementById("notesArea"),notesTitle=document.getElementById("notesTitle"),notesFt=document.getElementById("notesFt");
 var nodes=[],seq=1,rootId=null,sel=null,view={x:0,y:0,s:1},zTop=10,saveT=null,notesT=null;
-var curName=null;       // 当前文件在本地文件库里的名字（xxx.mmap）；null = 还没存成文件
-var curLocalName=null;  // 从磁盘打开时的原文件名（保存=同步到本地库或下载）
-var dirty=false;        // 有没有还没写进文件的改动
-var lastSnap=0;         // 上次自动快照时间（编辑中每 3 分钟留一份历史）
+var curLocalName=null;  // 从磁盘打开时的原文件名（仅用于导出默认文件名）
+var dirty=false;
 var offline=false;      // 单文件导出模式（导出的 .html 内嵌了 INITIAL）
-var drag=null,pan=null,lastTap={id:null,t:0},linkFrom=null;
+var drag=null,pan=null,lastTap={id:null,t:0},linkMode=false,linkFrom=null,selLink=null,linkDrag=null,linkMouse=null,linkCreateDrag=null;
 var stepExpand=(function(){try{var v=localStorage.getItem("xima-step-expand");return v===null?true:v==="1";}catch(_){return true;}})();
 var imeProxy=document.getElementById("imeProxy"),imeComposing=false;
 var UNDO_MAX=60,undoStack=[],redoStack=[],notesPreSnap=null,notesPreVal=null;
-var suppressUnload=false,viewSaveT=null,editSaveT=null;
+var viewSaveT=null,editSaveT=null;
 
 function modalOpen(){
   var s=document.getElementById("start");
   if(s&&!s.classList.contains("off"))return true;
-  return ["export","help"].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains("on");});
+  return ["export","help","feedback"].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains("on");});
+}
+function cloneLinks(arr){
+  return (arr||[]).map(function(l){
+    if(typeof l==="string")return l;
+    return {to:l.to,color:l.color||"",perp:(typeof l.perp==="number"?l.perp:0.16),along:(typeof l.along==="number"?l.along:0),
+      arrow:l.arrow||"end",dashed:(l.dashed!==false),
+      fromAnchor:l.fromAnchor?{side:l.fromAnchor.side,t:l.fromAnchor.t}:null,
+      toAnchor:l.toAnchor?{side:l.toAnchor.side,t:l.toAnchor.t}:null};
+  });
 }
 function takeSnap(){
   return JSON.stringify({
     sel:sel,seq:seq,rootId:rootId,
     nodes:nodes.map(function(n){
-      return {id:n.id,text:n.text,parent:n.parent,depth:n.depth,color:n.color,collapsed:!!n.collapsed,
-        x:n.x,y:n.y,note:n.note||"",mark:n.mark||"",todo:n.todo||"",links:(n.links||[]).slice()};
+      return {id:n.id,text:n.text,parent:n.parent,depth:n.depth,side:n.side||"",color:n.color,collapsed:!!n.collapsed,
+        x:n.x,y:n.y,note:n.note||"",mark:n.mark||"",todo:n.todo||"",links:cloneLinks(n.links)};
     })
   });
 }
@@ -351,6 +435,22 @@ function focusImeProxy(){
 
 function byId(id){for(var i=0;i<nodes.length;i++)if(nodes[i].id===id)return nodes[i];return null;}
 function kidsOf(id){return nodes.filter(function(n){return n.parent===id;});}
+function nodeSide(n){
+  if(!n||n.parent===null||n.id===rootId)return "center";
+  var cur=n,seen={};
+  while(cur&&cur.parent!==null&&cur.parent!==rootId&&!seen[cur.id]){
+    seen[cur.id]=1;cur=byId(cur.parent);
+  }
+  return (cur&&cur.side==="left")?"left":"right";
+}
+function sibsOf(n){
+  if(!n||n.parent===null)return [];
+  if(n.parent===rootId){
+    var sd=nodeSide(n);
+    return kidsOf(rootId).filter(function(k){return nodeSide(k)===sd;});
+  }
+  return kidsOf(n.parent);
+}
 function isVis(n){var p=n.parent,seen={};while(p&&!seen[p]){seen[p]=1;var pn=byId(p);if(!pn||pn.collapsed)return false;p=pn.parent;}return !p;}
 function subIds(n){
   var out=[],seen={},q=[n];
@@ -363,66 +463,110 @@ function subIds(n){
   return out;
 }
 function fresh(n){
-  return {id:n.id,text:n.text,parent:n.parent===undefined?null:n.parent,depth:n.depth||0,
+  return {id:n.id,text:n.text,parent:n.parent===undefined?null:n.parent,depth:n.depth||0,side:n.side||"",
     color:n.color||"#2b58d4",collapsed:!!n.collapsed,x:n.x||0,y:n.y||0,
-    note:n.note||"",mark:n.mark||"",todo:n.todo||"",links:n.links||[],w:0,h:0,_el:null,_path:null};
+    note:n.note||"",mark:n.mark||"",todo:n.todo||"",links:cloneLinks(n.links),w:0,h:0,_el:null,_path:null};
 }
 
-function build(node,parentId,depth,color){
+function build(node,parentId,depth,color,side){
   var id="n"+(seq++);
-  nodes.push(fresh({id:id,text:node.text,parent:parentId,depth:depth,color:color,x:0,y:0,note:node.note||""}));
+  nodes.push(fresh({id:id,text:node.text,parent:parentId,depth:depth,side:(depth===1?(node.side||side||"right"):""),color:color,x:0,y:0,note:node.note||""}));
   if(parentId===null)rootId=id;
-  (node.children||[]).forEach(function(c,i){build(c,id,depth+1,depth===0?PALETTE[i%PALETTE.length]:color);});
+  (node.children||[]).forEach(function(c,i){build(c,id,depth+1,depth===0?PALETTE[i%PALETTE.length]:color,depth===0?(c.side||side||"right"):"");});
 }
 
 var HGAP=64,VGAP=14;
 function layoutAll(){
   var r=byId(rootId);if(!r)return;
   var vis=nodes.filter(isVis);if(!vis.length)return;
-  var maxD=0;vis.forEach(function(n){if(n.depth>maxD)maxD=n.depth;});
-  var colW=[],d;
-  for(d=0;d<=maxD;d++){var m=0;vis.forEach(function(n){if(n.depth===d&&n.w>m)m=n.w;});colW[d]=m;}
-  var colX=[0];for(d=1;d<=maxD;d++)colX[d]=colX[d-1]+colW[d-1]+HGAP;
-  var cursor=0,seen={};
-  (function walk(n){
-    if(!n||seen[n.id])return;seen[n.id]=1;
-    n.x=colX[n.depth];
-    var kids=n.collapsed?[]:kidsOf(n.id).filter(isVis);
-    if(!kids.length){n.y=cursor;cursor+=n.h+VGAP;}
-    else{kids.forEach(walk);var a=kids[0],b=kids[kids.length-1];n.y=(a.y+b.y+b.h)/2-n.h/2;}
-  })(r);
-  var cy=r.y+r.h/2;
-  vis.forEach(function(n){n.y-=cy;});
+  r.x=0;
+  var rootKids=r.collapsed?[]:kidsOf(rootId).filter(isVis);
+  var rightKids=rootKids.filter(function(k){return nodeSide(k)!=="left";});
+  var leftKids=rootKids.filter(function(k){return nodeSide(k)==="left";});
+  function layoutBranch(topKids,isLeft){
+    if(!topKids.length)return;
+    var subList=[],seen={};
+    (function collect(arr){
+      arr.forEach(function(n){
+        if(!n||seen[n.id])return;seen[n.id]=1;subList.push(n);
+        if(!n.collapsed)collect(kidsOf(n.id).filter(isVis));
+      });
+    })(topKids);
+    var maxD=1;subList.forEach(function(n){if(n.depth>maxD)maxD=n.depth;});
+    var colW=[],d;
+    for(d=1;d<=maxD;d++){var m=0;subList.forEach(function(n){if(n.depth===d&&n.w>m)m=n.w;});colW[d]=m;}
+    var colAnchor=[];
+    if(!isLeft){
+      colAnchor[1]=r.w+HGAP;
+      for(d=2;d<=maxD;d++)colAnchor[d]=colAnchor[d-1]+colW[d-1]+HGAP;
+    }else{
+      colAnchor[1]=-HGAP;
+      for(d=2;d<=maxD;d++)colAnchor[d]=colAnchor[d-1]-colW[d-1]-HGAP;
+    }
+    var cursor=0,seenW={};
+    topKids.forEach(function(tk){
+      (function walkNode(n){
+        if(!n||seenW[n.id])return;seenW[n.id]=1;
+        n.x=isLeft?(colAnchor[n.depth]-n.w):colAnchor[n.depth];
+        var kids=n.collapsed?[]:kidsOf(n.id).filter(isVis);
+        if(!kids.length){n.y=cursor;cursor+=n.h+VGAP;}
+        else{kids.forEach(walkNode);var a=kids[0],b=kids[kids.length-1];n.y=(a.y+b.y+b.h)/2-n.h/2;}
+      })(tk);
+    });
+    var first=topKids[0],last=topKids[topKids.length-1];
+    var cy=(first.y+last.y+last.h)/2;
+    subList.forEach(function(n){n.y-=cy;});
+  }
+  layoutBranch(rightKids,false);
+  layoutBranch(leftKids,true);
+  r.y=-r.h/2;
 }
 
 function render(){
-  nodesEl.innerHTML="";edgeLayer.innerHTML="";linkLayer.innerHTML="";
+  nodesEl.innerHTML="";edgeLayer.innerHTML="";linkLayer.innerHTML="";if(linkHandles)linkHandles.innerHTML="";
   var vis=nodes.filter(isVis);
   vis.forEach(function(n){n._el=null;n._path=null;});
   vis.forEach(function(n){
     var kids=kidsOf(n.id),isCol=!!(n.collapsed&&kids.length);
+    var side=nodeSide(n),isLeft=(side==="left");
     var d=document.createElement("div");
-    d.className="node"+(n.id===rootId?" root":"")+(n.id===sel?" sel":"")+(n.todo==="done"?" done":"")+(isCol?" collapsed":"");
+    d.className="node"+(n.id===rootId?" root":"")+(isLeft?" side-left":"")+(n.id===sel?" sel":"")+(n.todo==="done"?" done":"")+(isCol?" collapsed":"")+(linkFrom===n.id?" linkto":"");
     d.setAttribute("data-id",n.id);
-    if(n.id!==rootId)d.style.borderLeftColor=n.color;
+    if(n.id!==rootId){
+      if(isLeft)d.style.borderRightColor=n.color;
+      else d.style.borderLeftColor=n.color;
+    }
     if(n.todo){var t=document.createElement("span");t.className="td";t.textContent=TODOICON[n.todo];d.appendChild(t);}
     var label=document.createElement("span");label.className="label";label.textContent=n.text;d.appendChild(label);
     if(n.mark){var mk=document.createElement("i");mk.className="mk";mk.style.background=n.mark;d.appendChild(mk);}
     if(n.note){var nt=document.createElement("i");nt.className="nt";nt.textContent="\u2261";nt.title=n.note.slice(0,200);d.appendChild(nt);}
+    if(n.id===rootId){
+      var actsL=document.createElement("div");actsL.className="node-acts left-acts leaf";
+      var addL=document.createElement("div");addL.className="add add-left";addL.textContent="\uFF0B";addL.title="在中心左侧添加节点";actsL.appendChild(addL);
+      d.appendChild(actsL);
+    }
     var acts=document.createElement("div");acts.className="node-acts"+(kids.length?"":" leaf");
-    if(kids.length){
+    var makeToggle=function(){
       if(isCol){
         var cnt=subIds(n).length-1;
         var cb=document.createElement("div");cb.className="col-cnt";
-        var tri=document.createElement("span");tri.className="tri";tri.textContent="\u25B8";cb.appendChild(tri);
+        var tri=document.createElement("span");tri.className="tri";tri.textContent=isLeft?"\u25C2":"\u25B8";cb.appendChild(tri);
         cb.appendChild(document.createTextNode(String(cnt)));
         cb.title=stepExpand?"已折叠 "+cnt+" 个子孙节点，点击仅展开此节点（子节点保持折叠）":"已折叠 "+cnt+" 个子孙节点，点击展开";
-        acts.appendChild(cb);
+        return cb;
       }else{
-        var tg=document.createElement("div");tg.className="tgl";tg.textContent="\u25C2";tg.title="折叠子节点 (Space)";acts.appendChild(tg);
+        var tg=document.createElement("div");tg.className="tgl";tg.textContent=isLeft?"\u25B8":"\u25C2";tg.title="折叠子节点 (Space)";
+        return tg;
       }
+    };
+    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B";add.title="添加子节点 (Tab)";
+    if(isLeft){
+      acts.appendChild(add);
+      if(kids.length)acts.appendChild(makeToggle());
+    }else{
+      if(kids.length)acts.appendChild(makeToggle());
+      acts.appendChild(add);
     }
-    var add=document.createElement("div");add.className="add";add.textContent="\uFF0B";add.title="添加子节点 (Tab)";acts.appendChild(add);
     d.appendChild(acts);
     nodesEl.appendChild(d);n._el=d;
   });
@@ -443,34 +587,198 @@ function drawEdges(){
   nodes.forEach(function(n){
     if(!n._path)return;
     var p=byId(n.parent);if(!p)return;
-    var x1=p.x+p.w,y1=p.y+p.h/2,x2=n.x,y2=n.y+n.h/2,mx=(x1+x2)/2;
+    var isLeft=(nodeSide(n)==="left");
+    var x1=isLeft?p.x:(p.x+p.w),y1=p.y+p.h/2;
+    var x2=isLeft?(n.x+n.w):n.x,y2=n.y+n.h/2;
+    var mx=(x1+x2)/2;
     n._path.setAttribute("d","M"+x1+","+y1+" C"+mx+","+y1+" "+mx+","+y2+" "+x2+","+y2);
   });
 }
-function linkPath(a,b){
-  var x1=a.x+a.w/2,y1=a.y+a.h/2,x2=b.x+b.w/2,y2=b.y+b.h/2;
-  var mx=(x1+x2)/2-(y2-y1)*0.16,my=(y1+y2)/2+(x2-x1)*0.16;
-  return "M"+x1+","+y1+" Q"+mx+","+my+" "+x2+","+y2;
+function normLink(raw){
+  if(typeof raw==="string")return {to:raw,color:"",perp:0.16,along:0,arrow:"end",dashed:true,fromAnchor:null,toAnchor:null};
+  return {
+    to:raw.to,
+    color:raw.color||"",
+    perp:(typeof raw.perp==="number"?raw.perp:0.16),
+    along:(typeof raw.along==="number"?raw.along:0),
+    arrow:(raw.arrow==="none"||raw.arrow==="end"||raw.arrow==="start"||raw.arrow==="both")?raw.arrow:"end",
+    dashed:(raw.dashed!==false),
+    fromAnchor:raw.fromAnchor&&raw.fromAnchor.side?{side:raw.fromAnchor.side,t:Math.max(0.05,Math.min(0.95,raw.fromAnchor.t))}:null,
+    toAnchor:raw.toAnchor&&raw.toAnchor.side?{side:raw.toAnchor.side,t:Math.max(0.05,Math.min(0.95,raw.toAnchor.t))}:null
+  };
+}
+function anchorPt(node,anchor,other){
+  if(anchor&&anchor.side){
+    var t=Math.max(0.05,Math.min(0.95,anchor.t));
+    if(anchor.side==="top")return {x:node.x+node.w*t,y:node.y};
+    if(anchor.side==="bottom")return {x:node.x+node.w*t,y:node.y+node.h};
+    if(anchor.side==="left")return {x:node.x,y:node.y+node.h*t};
+    return {x:node.x+node.w,y:node.y+node.h*t};
+  }
+  var cx=node.x+node.w/2,cy=node.y+node.h/2;
+  var ox=other.x+other.w/2,oy=other.y+other.h/2;
+  var dx=ox-cx,dy=oy-cy;
+  if(Math.abs(dx)<1&&Math.abs(dy)<1)return {x:cx,y:cy};
+  var hw=Math.max(1,node.w/2),hh=Math.max(1,node.h/2);
+  var sx=Math.abs(dx)/hw,sy=Math.abs(dy)/hh;
+  var k=1/Math.max(sx,sy);
+  return {x:cx+dx*k,y:cy+dy*k};
+}
+function nearestAnchor(node,wx,wy){
+  var x0=node.x,y0=node.y,x1=node.x+node.w,y1=node.y+node.h;
+  var tx=Math.max(0.05,Math.min(0.95,(wx-x0)/Math.max(1,node.w)));
+  var ty=Math.max(0.05,Math.min(0.95,(wy-y0)/Math.max(1,node.h)));
+  var cands=[
+    {side:"top",t:tx,d:Math.hypot(wx-(x0+node.w*tx),wy-y0)},
+    {side:"bottom",t:tx,d:Math.hypot(wx-(x0+node.w*tx),wy-y1)},
+    {side:"left",t:ty,d:Math.hypot(wx-x0,wy-(y0+node.h*ty))},
+    {side:"right",t:ty,d:Math.hypot(wx-x1,wy-(y0+node.h*ty))}
+  ];
+  cands.sort(function(a,b){return a.d-b.d;});
+  return {side:cands[0].side,t:Math.round(cands[0].t*100)/100};
+}
+function unitDir(dx,dy,fx,fy){
+  var l=Math.hypot(dx,dy);
+  if(l<0.5){dx=fx;dy=fy;l=Math.hypot(dx,dy);}
+  if(l<0.5)return {ux:1,uy:0};
+  return {ux:dx/l,uy:dy/l};
+}
+function arrowPolyPts(tipX,tipY,ux,uy,scale){
+  var L=11*scale,W=4.8*scale,N=7.5*scale;
+  var bx=tipX-ux*L,by=tipY-uy*L;
+  var nx=tipX-ux*N,ny=tipY-uy*N;
+  var px=-uy*W,py=ux*W;
+  return tipX+","+tipY+" "+(bx+px)+","+(by+py)+" "+nx+","+ny+" "+(bx-px)+","+(by-py);
+}
+function linkGeom(a,b,lnk){
+  var p1=anchorPt(a,lnk.fromAnchor,b);
+  var p2=anchorPt(b,lnk.toAnchor,a);
+  var dx=p2.x-p1.x,dy=p2.y-p1.y;
+  var mx=(p1.x+p2.x)/2+dx*lnk.along-dy*lnk.perp;
+  var my=(p1.y+p2.y)/2+dy*lnk.along+dx*lnk.perp;
+  var hx=0.25*p1.x+0.5*mx+0.25*p2.x;
+  var hy=0.25*p1.y+0.5*my+0.25*p2.y;
+  var dEnd=unitDir(p2.x-mx,p2.y-my,dx,dy);
+  var dStart=unitDir(p1.x-mx,p1.y-my,-dx,-dy);
+  var arr=lnk.arrow||"end";
+  var hasEnd=(arr==="end"||arr==="both"),hasStart=(arr==="start"||arr==="both");
+  var sx=hasStart?(p1.x-dStart.ux*6):p1.x,sy=hasStart?(p1.y-dStart.uy*6):p1.y;
+  var ex=hasEnd?(p2.x-dEnd.ux*6):p2.x,ey=hasEnd?(p2.y-dEnd.uy*6):p2.y;
+  return {
+    x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,mx:mx,my:my,hx:hx,hy:hy,
+    dEnd:dEnd,dStart:dStart,hasEnd:hasEnd,hasStart:hasStart,
+    d:"M"+sx+","+sy+" Q"+mx+","+my+" "+ex+","+ey,
+    hitD:"M"+p1.x+","+p1.y+" Q"+mx+","+my+" "+p2.x+","+p2.y
+  };
+}
+function getSelLinkObj(){
+  if(!selLink)return null;
+  var a=byId(selLink.from);if(!a||!a.links||selLink.idx<0||selLink.idx>=a.links.length)return null;
+  if(typeof a.links[selLink.idx]==="string")a.links[selLink.idx]=normLink(a.links[selLink.idx]);
+  return {fromNode:a,lnk:a.links[selLink.idx]};
 }
 function drawLinks(){
+  linkLayer.innerHTML="";
+  if(linkHandles)linkHandles.innerHTML="";
+  var hs=1/Math.max(0.3,Math.min(2.2,view.s));
+  var activeFound=false;
   nodes.forEach(function(n){
-    (n.links||[]).forEach(function(to){
-      var b=byId(to); if(!b||!isVis(n)||!isVis(b)) return;
-      var d=linkPath(n,b);
+    if(!n.links||!n.links.length)return;
+    for(var idx=0;idx<n.links.length;idx++){
+      if(typeof n.links[idx]==="string")n.links[idx]=normLink(n.links[idx]);
+      var lnk=n.links[idx];
+      var b=byId(lnk.to);if(!b||!isVis(n)||!isVis(b))continue;
+      var g=linkGeom(n,b,lnk);
+      var col=lnk.color||n.color;
+      var isSel=!!(selLink&&selLink.from===n.id&&selLink.idx===idx);
+      if(isSel)activeFound=true;
+      if(isSel){
+        var glow=document.createElementNS(NS,"path");
+        glow.setAttribute("d",g.hitD);glow.setAttribute("class","sel-glow");glow.setAttribute("stroke",col);
+        linkLayer.appendChild(glow);
+      }
       var hit=document.createElementNS(NS,"path");
-      hit.setAttribute("d",d);hit.setAttribute("class","hit");hit.setAttribute("data-from",n.id);hit.setAttribute("data-to",to);
+      hit.setAttribute("d",g.hitD);hit.setAttribute("class","hit");
+      hit.setAttribute("data-from",n.id);hit.setAttribute("data-idx",String(idx));
       linkLayer.appendChild(hit);
       var p=document.createElementNS(NS,"path");
-      p.setAttribute("d",d);p.setAttribute("stroke",n.color);
+      p.setAttribute("d",g.d);p.setAttribute("stroke",col);
+      var cls=[];
+      if(!lnk.dashed)cls.push("solid");
+      if(isSel)cls.push("sel-line");
+      if(cls.length)p.setAttribute("class",cls.join(" "));
       linkLayer.appendChild(p);
-    });
+      var arrScale=isSel?1.12:1;
+      if(g.hasEnd){
+        var ae=document.createElementNS(NS,"polygon");
+        ae.setAttribute("class","lk-arr");ae.setAttribute("fill",col);
+        ae.setAttribute("points",arrowPolyPts(g.x2,g.y2,g.dEnd.ux,g.dEnd.uy,arrScale));
+        linkLayer.appendChild(ae);
+      }
+      if(g.hasStart){
+        var as=document.createElementNS(NS,"polygon");
+        as.setAttribute("class","lk-arr");as.setAttribute("fill",col);
+        as.setAttribute("points",arrowPolyPts(g.x1,g.y1,g.dStart.ux,g.dStart.uy,arrScale));
+        linkLayer.appendChild(as);
+      }
+      if(isSel&&linkHandles){
+        var g1=document.createElementNS(NS,"line");
+        g1.setAttribute("class","lh-guide");g1.setAttribute("x1",g.x1);g1.setAttribute("y1",g.y1);g1.setAttribute("x2",g.hx);g1.setAttribute("y2",g.hy);
+        g1.setAttribute("stroke-width",String(1.2*hs));
+        var g2=document.createElementNS(NS,"line");
+        g2.setAttribute("class","lh-guide");g2.setAttribute("x1",g.x2);g2.setAttribute("y1",g.y2);g2.setAttribute("x2",g.hx);g2.setAttribute("y2",g.hy);
+        g2.setAttribute("stroke-width",String(1.2*hs));
+        linkHandles.appendChild(g1);linkHandles.appendChild(g2);
+
+        var makePtHandle=function(cx,cy,kind){
+          var hitC=document.createElementNS(NS,"circle");
+          hitC.setAttribute("class","lh-hit");hitC.setAttribute("cx",cx);hitC.setAttribute("cy",cy);hitC.setAttribute("r",String(14*hs));
+          hitC.setAttribute("data-lh",kind);
+          var visC=document.createElementNS(NS,"circle");
+          visC.setAttribute("class","lh-pt");visC.setAttribute("cx",cx);visC.setAttribute("cy",cy);visC.setAttribute("r",String(6.5*hs));
+          visC.setAttribute("stroke-width",String(2.2*hs));
+          linkHandles.appendChild(hitC);linkHandles.appendChild(visC);
+        };
+        makePtHandle(g.x1,g.y1,"from");
+        makePtHandle(g.x2,g.y2,"to");
+
+        var hitCv=document.createElementNS(NS,"circle");
+        hitCv.setAttribute("class","lh-hit curve");hitCv.setAttribute("cx",g.hx);hitCv.setAttribute("cy",g.hy);hitCv.setAttribute("r",String(15*hs));
+        hitCv.setAttribute("data-lh","curve");
+        var sz=12*hs;
+        var hc=document.createElementNS(NS,"rect");
+        hc.setAttribute("class","lh-curve");hc.setAttribute("x",g.hx-sz/2);hc.setAttribute("y",g.hy-sz/2);
+        hc.setAttribute("width",sz);hc.setAttribute("height",sz);hc.setAttribute("rx",String(2*hs));
+        hc.setAttribute("stroke-width",String(2*hs));
+        hc.setAttribute("transform","rotate(45 "+g.hx+" "+g.hy+")");
+        linkHandles.appendChild(hitCv);linkHandles.appendChild(hc);
+      }
+    }
   });
+  if(selLink&&!activeFound)selLink=null;
+  if(linkMode&&linkFrom&&linkMouse&&linkHandles){
+    var fn=byId(linkFrom);
+    if(fn&&isVis(fn)){
+      var fx=fn.x+fn.w/2,fy=fn.y+fn.h/2;
+      var pd=unitDir(linkMouse.x-fx,linkMouse.y-fy,1,0);
+      var pv=document.createElementNS(NS,"path");
+      pv.setAttribute("class","lh-preview");
+      pv.setAttribute("stroke-width",String(2.2*hs));
+      pv.setAttribute("d","M"+fx+","+fy+" L"+(linkMouse.x-pd.ux*5*hs)+","+(linkMouse.y-pd.uy*5*hs));
+      var pa=document.createElementNS(NS,"polygon");
+      pa.setAttribute("class","lh-preview-arr");
+      pa.setAttribute("points",arrowPolyPts(linkMouse.x,linkMouse.y,pd.ux,pd.uy,hs));
+      linkHandles.appendChild(pv);linkHandles.appendChild(pa);
+    }
+  }
+  syncLinkBar();
 }
 function applyView(){
   var tx=Math.round(view.x),ty=Math.round(view.y);
   nodesEl.style.transform="translate("+tx+"px,"+ty+"px) scale("+view.s+")";
   var t="translate("+tx+" "+ty+") scale("+view.s+")";
   edgeLayer.setAttribute("transform",t);linkLayer.setAttribute("transform",t);
+  if(linkHandles)linkHandles.setAttribute("transform",t);
 }
 function fit(){
   var vis=nodes.filter(isVis);if(!vis.length)return;
@@ -484,7 +792,8 @@ function fit(){
 function centerRoot(s){
   var r=byId(rootId);if(!r)return;
   view.s=s||0.6;
-  view.x=canvas.clientWidth*0.28-r.x*view.s;
+  var hasLeft=kidsOf(rootId).some(function(k){return nodeSide(k)==="left";});
+  view.x=hasLeft?(canvas.clientWidth*0.5-(r.x+r.w/2)*view.s):(canvas.clientWidth*0.28-r.x*view.s);
   view.y=canvas.clientHeight/2-(r.y+r.h/2)*view.s;
   applyView();
 }
@@ -542,32 +851,89 @@ function paintSwatches(){
 }
 var best=null;
 
-/* ---------- 连线 ---------- */
+/* ---------- 连线（进入/退出、自由选择、位置/曲率/箭头/颜色/删除） ---------- */
+function syncLinkBar(){
+  var bar=document.getElementById("linkbar");if(!bar)return;
+  var cur=getSelLinkObj();
+  if(!cur){bar.classList.remove("on");return;}
+  bar.classList.add("on");
+  var col=cur.lnk.color||cur.fromNode.color;
+  var box=document.getElementById("lbColors");
+  if(box){
+    box.innerHTML="";
+    PALETTE.slice(0,8).forEach(function(c){
+      var b=document.createElement("button");
+      b.className="sw"+(col.toLowerCase()===c.toLowerCase()?" cur":"");
+      b.style.background=c;b.title="连线颜色";
+      b.onclick=function(){pushUndo();cur.lnk.color=c;drawLinks();save();};
+      box.appendChild(b);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#lbArrows button"),function(b){
+    b.classList.toggle("act",b.getAttribute("data-arrow")===(cur.lnk.arrow||"end"));
+  });
+  var bd=document.getElementById("lbDashed");
+  if(bd){
+    bd.classList.toggle("act",!cur.lnk.dashed);
+    bd.textContent=cur.lnk.dashed?"虚线":"实线";
+  }
+  var pick=document.getElementById("lbColorPick");
+  if(pick&&document.activeElement!==pick)pick.value=/^#[0-9a-f]{6}$/i.test(col)?col:"#2b58d4";
+  var rng=document.getElementById("lbCurve");
+  if(rng&&document.activeElement!==rng)rng.value=String(Math.max(-1.2,Math.min(1.2,cur.lnk.perp)));
+}
 function toggleLink(){
-  if(linkFrom){exitLink();return;}
-  if(!sel){alert("先选一个节点，再点连线");return;}
-  linkFrom=sel; canvas.classList.add("linking"); document.getElementById("bLink").classList.add("on");
+  if(linkMode){exitLink();return;}
+  if(!nodes.length){alert("请先新建或导入一张思维导图");return;}
+  linkMode=true; linkFrom=null; linkMouse=null; linkCreateDrag=null;
+  canvas.classList.add("linking");
+  var bl=document.getElementById("bLink"); if(bl)bl.classList.add("on");
+  var bm=document.getElementById("linkModeBanner"); if(bm)bm.classList.add("on");
+  drawLinks();
+  toast("已进入连线模式：点击或拖拽节点连线，点击已有连线可调整与删除");
 }
 function exitLink(){
-  linkFrom=null;canvas.classList.remove("linking");document.getElementById("bLink").classList.remove("on");
-  if(sel){var n=byId(sel);if(n&&n._el)n._el.classList.remove("linkto");}
+  linkMode=false; linkFrom=null; linkMouse=null; linkCreateDrag=null;
+  canvas.classList.remove("linking");
+  var bl=document.getElementById("bLink"); if(bl)bl.classList.remove("on");
+  var bm=document.getElementById("linkModeBanner"); if(bm)bm.classList.remove("on");
+  nodes.forEach(function(n){if(n._el)n._el.classList.remove("linkto");});
+  drawLinks();
+}
+function setLinkFrom(id){
+  nodes.forEach(function(n){if(n._el)n._el.classList.remove("linkto");});
+  linkFrom=id||null;
+  if(id){var n=byId(id);if(n&&n._el)n._el.classList.add("linkto");}
+  drawLinks();
+}
+function selectLink(fromId,idx){
+  selLink=(fromId&&idx>=0)?{from:fromId,idx:idx}:null;
+  drawLinks();
 }
 function createLink(fromId,toId){
   if(!fromId||!toId||fromId===toId)return;
   var a=byId(fromId),b=byId(toId);if(!a||!b)return;
-  if(subIds(a).indexOf(toId)>=0||subIds(b).indexOf(fromId)>=0){alert("父子之间不用连线（已经有实线了）");return;}
-  a.links=a.links||[];b.links=b.links||[];
-  if(a.links.indexOf(toId)>=0)return;
+  a.links=a.links||[];
+  var exists=-1;
+  for(var i=0;i<a.links.length;i++){
+    var tid=typeof a.links[i]==="string"?a.links[i]:a.links[i].to;
+    if(tid===toId){exists=i;break;}
+  }
+  if(exists>=0){selectLink(fromId,exists);toast("该连线已存在，已为您选中以便调整");return;}
   pushUndo();
-  a.links.push(toId);
+  a.links.push({to:toId,color:"",perp:0.16,along:0,arrow:"end",dashed:true,fromAnchor:null,toAnchor:null});
+  selLink={from:fromId,idx:a.links.length-1};
   render();save();
+  toast("已添加连线，可拖动圆点/菱形调位置与曲率，或使用下方连线栏");
 }
-function removeLink(fromId,toId){
-  var a=byId(fromId);if(!a||!a.links)return;
+function removeSelectedLink(){
+  if(!selLink)return;
+  var a=byId(selLink.from);if(!a||!a.links||selLink.idx<0||selLink.idx>=a.links.length)return;
   pushUndo();
-  a.links=a.links.filter(function(x){return x!==toId;});
-  var b=byId(toId);if(b&&b.links)b.links=b.links.filter(function(x){return x!==fromId;});
+  a.links.splice(selLink.idx,1);
+  selLink=null;
   render();save();
+  toast("已删除连线");
 }
 
 /* ---------- 增删改 ---------- */
@@ -620,21 +986,31 @@ function startEdit(id,opts){
   label.addEventListener("keydown",onKey);
   label.addEventListener("input",onInput);
 }
-function addChild(pid){
+function addChild(pid,opts){
   var p=byId(pid);if(!p)return;
   pushUndo();
-  var idx=kidsOf(pid).length,id="n"+(seq++);
-  nodes.push(fresh({id:id,text:"新节点",parent:pid,depth:p.depth+1,
-    color:(p.depth===0?PALETTE[idx%PALETTE.length]:p.color),x:p.x+p.w+70,y:p.y+(idx%6)*34}));
+  var reqSide=(opts&&opts.side)||(p.id===rootId?"right":nodeSide(p));
+  var sameKids=(p.id===rootId)?kidsOf(pid).filter(function(k){return nodeSide(k)===reqSide;}):kidsOf(pid);
+  var idx=sameKids.length,id="n"+(seq++);
+  var nx=(reqSide==="left")?(p.x-136):(p.x+p.w+70);
+  var ny=p.y+(idx%6)*34;
+  var color=(p.depth===0?PALETTE[kidsOf(pid).length%PALETTE.length]:p.color);
+  nodes.push(fresh({id:id,text:"新节点",parent:pid,depth:p.depth+1,side:(p.id===rootId?reqSide:""),
+    color:color,x:nx,y:ny}));
   p.collapsed=false;
+  if(p.id===rootId&&reqSide==="left"&&(p.x*view.s+view.x)<200){
+    view.x=Math.max(view.x,canvas.clientWidth*0.48-(p.x+p.w/2)*view.s);
+  }
   render();setSel(id);save();
   setTimeout(function(){startEdit(id);},0);
 }
 function addSibling(id){
   var n0=byId(id);if(!n0||n0.parent===null)return;
   pushUndo();
+  var sd=nodeSide(n0);
   var id="n"+(seq++);
-  nodes.push(fresh({id:id,text:"新节点",parent:n0.parent,depth:n0.depth,color:n0.color,x:n0.x,y:n0.y+n0.h+16}));
+  var color=(n0.parent===rootId?PALETTE[kidsOf(rootId).length%PALETTE.length]:n0.color);
+  nodes.push(fresh({id:id,text:"新节点",parent:n0.parent,depth:n0.depth,side:(n0.parent===rootId?sd:""),color:color,x:n0.x,y:n0.y+n0.h+16}));
   render();setSel(id);save();
   setTimeout(function(){startEdit(id);},0);
 }
@@ -644,8 +1020,13 @@ function del(id){
   if(sub.length>1&&!window.confirm("删除「"+n.text+"」及其 "+(sub.length-1)+" 个子节点？"))return;
   pushUndo();
   nodes=nodes.filter(function(x){return sub.indexOf(x.id)<0;});
-  nodes.forEach(function(x){ if(x.links&&x.links.length) x.links=x.links.filter(function(t){return sub.indexOf(t)<0;}); });
-  if(linkFrom&&sub.indexOf(linkFrom)>=0)exitLink();
+  nodes.forEach(function(x){
+    if(x.links&&x.links.length){
+      x.links=x.links.filter(function(l){var tid=typeof l==="string"?l:l.to;return sub.indexOf(tid)<0;});
+    }
+  });
+  if(selLink&&sub.indexOf(selLink.from)>=0)selLink=null;
+  if(linkFrom&&sub.indexOf(linkFrom)>=0)setLinkFrom(null);
   sel=null;render();save();
 }
 function ensureVisibleSel(){
@@ -813,18 +1194,51 @@ function reassignColors(){
   function paint(n,c){ n.color=c; kidsOf(n.id).forEach(function(k){paint(k,c);}); }
   kidsOf(rootId).forEach(function(c,i){ paint(c,PALETTE[i%PALETTE.length]); });
 }
-function reparent(nodeId,newParentId,preSnap){
+function reparent(nodeId,newParentId,preSnap,dropSide){
   var n=byId(nodeId),p=byId(newParentId);
   if(!n||!p||n.id===rootId||n.id===newParentId)return false;
   if(subIds(n).indexOf(newParentId)>=0)return false;
+  if(n.parent===rootId&&newParentId===rootId){
+    var nextSide=(dropSide==="left"?"left":"right");
+    if(nodeSide(n)===nextSide)return false;
+    pushUndo(preSnap);
+    n.side=nextSide;
+    var oldRX=p.x,oldRY=p.y;
+    render();layoutAll();place();drawEdges();drawLinks();
+    view.x+=(oldRX-p.x)*view.s;view.y+=(oldRY-p.y)*view.s;applyView();
+    setSel(n.id);paintSwatches();save();
+    toast(nextSide==="left"?"已换边至中心节点左侧":"已换边至中心节点右侧");
+    return true;
+  }
   pushUndo(preSnap);
   n.parent=newParentId;p.collapsed=false;
+  n.side=(newParentId===rootId)?(dropSide==="left"?"left":"right"):"";
   recomputeDepth();reassignColors();
-  var sibs=kidsOf(newParentId).length;
-  var dx=(p.x+p.w+70)-n.x,dy=(p.y+(sibs-1)*40)-n.y;
-  subIds(n).forEach(function(id){var s=byId(id);s.x+=dx;s.y+=dy;});
-  render();save();
+  var oldPX=p.x,oldPY=p.y;
+  if(newParentId===rootId){
+    render();layoutAll();place();drawEdges();drawLinks();
+    view.x+=(oldPX-p.x)*view.s;view.y+=(oldPY-p.y)*view.s;applyView();
+    setSel(n.id);paintSwatches();save();
+  }else{
+    var isLeft=(nodeSide(n)==="left");
+    var sibs=sibsOf(n).length;
+    var dx=(isLeft?(p.x-70-n.w):(p.x+p.w+70))-n.x,dy=(p.y+(sibs-1)*40)-n.y;
+    subIds(n).forEach(function(id){var s=byId(id);s.x+=dx;s.y+=dy;});
+    render();save();
+  }
   return true;
+}
+function switchBranchSide(id,targetSide){
+  var n=byId(id),r=byId(rootId);
+  if(!n||!r||n.parent!==rootId)return;
+  if(nodeSide(n)===targetSide)return;
+  pushUndo();
+  var oldRX=r.x,oldRY=r.y;
+  n.side=(targetSide==="left"?"left":"right");
+  render();layoutAll();place();drawEdges();drawLinks();
+  view.x+=(oldRX-r.x)*view.s;view.y+=(oldRY-r.y)*view.s;applyView();
+  setSel(id);paintSwatches();save();
+  toast(targetSide==="left"?"已移至中心节点左侧":"已移至中心节点右侧");
 }
 function nodeAt(clientX,clientY,exclude){
   var rect=canvas.getBoundingClientRect();
@@ -837,10 +1251,19 @@ function nodeAt(clientX,clientY,exclude){
   }
   return null;
 }
-function setDrop(id){
-  if(drag&&drag.lastDrop&&drag.lastDrop!==id){var o=byId(drag.lastDrop);if(o&&o._el)o._el.classList.remove("drop");}
-  if(drag)drag.lastDrop=id;
-  if(id){var n=byId(id);if(n&&n._el)n._el.classList.add("drop");}
+function setDrop(id,side){
+  if(drag&&drag.lastDrop){
+    var o=byId(drag.lastDrop);
+    if(o&&o._el)o._el.classList.remove("drop","drop-left","drop-right");
+  }
+  if(drag){drag.lastDrop=id;drag.lastDropSide=side||null;}
+  if(id){
+    var n=byId(id);
+    if(n&&n._el){
+      if(id===rootId&&side)n._el.classList.add(side==="left"?"drop-left":"drop-right");
+      else n._el.classList.add("drop");
+    }
+  }
 }
 var reorderLineEl=document.getElementById("reorderLine");
 function setReorder(target){
@@ -853,12 +1276,53 @@ function setReorder(target){
   reorderLineEl.style.left=Math.round(sx)+"px";
   reorderLineEl.style.top=Math.round(sy-1)+"px";
   reorderLineEl.style.width=Math.round(sw)+"px";
+  var sp=reorderLineEl.querySelector("span");
+  if(sp)sp.textContent=target.label||"调整排序";
   reorderLineEl.style.display="block";
 }
 function findReorderTarget(nodeId,wx,wy,hit){
   var n=byId(nodeId);
   if(!n||n.parent===null)return null;
-  var sibs=kidsOf(n.parent);
+  var r=byId(rootId);
+  var origSide=nodeSide(n);
+  if(n.parent===rootId&&r){
+    var rCenter=r.x+r.w/2;
+    var desiredSide=(wx<rCenter)?"left":"right";
+    var sideChanged=(desiredSide!==origSide);
+    var targetSibs=kidsOf(rootId).filter(function(k){return k.id!==nodeId&&nodeSide(k)===desiredSide;});
+    if(hit){
+      if(hit.parent!==rootId)return null;
+      var frac=(wy-hit.y)/Math.max(1,hit.h);
+      if(frac>=0.35&&frac<=0.65)return null;
+      var hitSide=nodeSide(hit);
+      var hitSibs=kidsOf(rootId).filter(function(k){return k.id!==nodeId&&nodeSide(k)===hitSide;});
+      var hi=hitSibs.indexOf(hit);
+      if(hi<0)return null;
+      var slotH=(frac<0.35)?hi:(hi+1);
+      if(hitSide===origSide&&slotH===sibsOf(n).indexOf(n))return null;
+      var lx,ly,lw;
+      if(slotH===0){var f=hitSibs[0];lx=f.x;lw=f.w;ly=f.y-7;}
+      else if(slotH>=hitSibs.length){var l=hitSibs[hitSibs.length-1];lx=l.x;lw=l.w;ly=l.y+l.h+7;}
+      else{var a=hitSibs[slotH-1],b=hitSibs[slotH];lx=Math.min(a.x,b.x);lw=Math.max(a.w,b.w);ly=(a.y+a.h+b.y)/2;}
+      return {slot:slotH,targetSide:hitSide,lineX:lx,lineY:ly,lineW:lw,label:(hitSide!==origSide?(hitSide==="left"?"换到左侧":"换到右侧"):"调整排序")};
+    }
+    if(sideChanged){
+      if(!targetSibs.length){
+        var tx0=(desiredSide==="left")?(r.x-HGAP-n.w):(r.x+r.w+HGAP);
+        return {slot:0,targetSide:desiredSide,lineX:tx0,lineY:r.y+r.h/2,lineW:Math.max(96,n.w),label:(desiredSide==="left"?"换到中心左侧":"换到中心右侧")};
+      }
+      var slotS=targetSibs.length;
+      for(var ti=0;ti<targetSibs.length;ti++){
+        if(wy<targetSibs[ti].y+targetSibs[ti].h/2){slotS=ti;break;}
+      }
+      var sx0,sy0,sw0;
+      if(slotS===0){var tf=targetSibs[0];sx0=tf.x;sw0=tf.w;sy0=tf.y-7;}
+      else if(slotS>=targetSibs.length){var tl=targetSibs[targetSibs.length-1];sx0=tl.x;sw0=tl.w;sy0=tl.y+tl.h+7;}
+      else{var ta=targetSibs[slotS-1],tb=targetSibs[slotS];sx0=Math.min(ta.x,tb.x);sw0=Math.max(ta.w,tb.w);sy0=(ta.y+ta.h+tb.y)/2;}
+      return {slot:slotS,targetSide:desiredSide,lineX:sx0,lineY:sy0,lineW:sw0,label:(desiredSide==="left"?"换到中心左侧":"换到中心右侧")};
+    }
+  }
+  var sibs=sibsOf(n);
   if(sibs.length<=1)return null;
   var oldIdx=sibs.indexOf(n);
   var others=sibs.filter(function(s){return s.id!==nodeId;});
@@ -873,13 +1337,13 @@ function findReorderTarget(nodeId,wx,wy,hit){
   });
   var inHitEdge=false,slot=-1;
   if(hit){
-    if(hit.parent!==n.parent)return null;
-    var frac=(wy-hit.y)/Math.max(1,hit.h);
-    if(frac>=0.35&&frac<=0.65)return null;
-    var hi=others.indexOf(hit);
-    if(hi<0)return null;
+    if(hit.parent!==n.parent||(hit.parent===rootId&&nodeSide(hit)!==origSide))return null;
+    var frac2=(wy-hit.y)/Math.max(1,hit.h);
+    if(frac2>=0.35&&frac2<=0.65)return null;
+    var hi2=others.indexOf(hit);
+    if(hi2<0)return null;
     inHitEdge=true;
-    slot=(frac<0.35)?hi:(hi+1);
+    slot=(frac2<0.35)?hi2:(hi2+1);
   }else{
     var ptrInCol=(wx>=colMinX-55&&wx<=colMaxX+55);
     var boxInCol=(n.x+n.w>=colMinX-25&&n.x<=colMaxX+25);
@@ -892,33 +1356,39 @@ function findReorderTarget(nodeId,wx,wy,hit){
   if(slot===oldIdx)return null;
   var lineX,lineY,lineW;
   if(slot===0){
-    var f=others[0];
-    lineX=f.x;lineW=f.w;lineY=f.y-7;
+    var f2=others[0];
+    lineX=f2.x;lineW=f2.w;lineY=f2.y-7;
   }else if(slot>=others.length){
-    var l=others[others.length-1];
-    lineX=l.x;lineW=l.w;lineY=l.y+l.h+7;
+    var l2=others[others.length-1];
+    lineX=l2.x;lineW=l2.w;lineY=l2.y+l2.h+7;
   }else{
-    var a=others[slot-1],b=others[slot];
-    lineX=Math.min(a.x,b.x);
-    lineW=Math.max(a.w,b.w);
-    lineY=(a.y+a.h+b.y)/2;
+    var a2=others[slot-1],b2=others[slot];
+    lineX=Math.min(a2.x,b2.x);
+    lineW=Math.max(a2.w,b2.w);
+    lineY=(a2.y+a2.h+b2.y)/2;
   }
-  return {slot:slot,lineX:lineX,lineY:lineY,lineW:lineW,inHitEdge:inHitEdge};
+  return {slot:slot,targetSide:origSide,lineX:lineX,lineY:lineY,lineW:lineW,inHitEdge:inHitEdge,label:"调整排序"};
 }
-function reorderNode(nodeId,targetSlot,preSnap){
+function reorderNode(nodeId,targetSlot,preSnap,targetSide){
   var n=byId(nodeId);
   if(!n||n.parent===null)return false;
   var p=byId(n.parent);if(!p)return false;
-  var sibs=kidsOf(p.id);
-  var oldIdx=sibs.indexOf(n);
-  if(oldIdx<0)return false;
-  var others=sibs.filter(function(s){return s.id!==nodeId;});
-  if(targetSlot<0||targetSlot>others.length||targetSlot===oldIdx)return false;
+  var origSide=nodeSide(n);
+  var nextSide=(n.parent===rootId&&targetSide)?targetSide:origSide;
+  var sideChanged=(n.parent===rootId&&nextSide!==origSide);
+  var others=(n.parent===rootId)
+    ?kidsOf(rootId).filter(function(k){return k.id!==nodeId&&nodeSide(k)===nextSide;})
+    :sibsOf(n).filter(function(s){return s.id!==nodeId;});
+  var oldIdx=sibsOf(n).indexOf(n);
+  if(!sideChanged&&(targetSlot<0||targetSlot>others.length||targetSlot===oldIdx))return false;
   pushUndo(preSnap);
   var oldPX=p.x,oldPY=p.y;
+  if(n.parent===rootId)n.side=nextSide;
   var pos=nodes.indexOf(n);
   if(pos>=0)nodes.splice(pos,1);
-  if(targetSlot<others.length){
+  if(!others.length){
+    nodes.push(n);
+  }else if(targetSlot<others.length){
     var refIdx=nodes.indexOf(others[targetSlot]);
     nodes.splice(refIdx>=0?refIdx:nodes.length,0,n);
   }else{
@@ -928,187 +1398,24 @@ function reorderNode(nodeId,targetSlot,preSnap){
   render();layoutAll();place();drawEdges();drawLinks();
   view.x+=(oldPX-p.x)*view.s;view.y+=(oldPY-p.y)*view.s;applyView();
   setSel(n.id);paintSwatches();save();
-  toast("已调整节点排序");
+  toast(sideChanged?(nextSide==="left"?"已换边至中心节点左侧":"已换边至中心节点右侧"):"已调整节点排序");
   return true;
 }
 function moveSibling(id,dir){
   var n=byId(id);if(!n||n.parent===null)return;
-  var sibs=kidsOf(n.parent),idx=sibs.indexOf(n);
+  var sibs=sibsOf(n),idx=sibs.indexOf(n);
   if(idx<0)return;
   var target=idx+(dir<0?-1:1);
   if(target<0||target>=sibs.length)return;
-  reorderNode(id,target,takeSnap());
+  reorderNode(id,target,takeSnap(),nodeSide(n));
 }
 
-/* ---------- 本地持久化仓库（IndexedDB + localStorage 兜底，无服务器依赖） ---------- */
-var LocalStore=(function(){
-  var DB_NAME="xima-mindmap-local",DB_VER=1,SNAP_MAX=30;
-  var LS_FILES="xima-local-files-v1",LS_HIST="xima-local-hist-v1";
-  var dbP=null;
-  function titleOf(doc){
-    var r=(doc&&doc.nodes||[]).filter(function(n){return n.parent===null;})[0];
-    return (r&&r.text)||"(无名)";
-  }
-  function nodesKey(doc){ return JSON.stringify((doc&&doc.nodes)||[]); }
-  function lsGet(k,def){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(_){return def;} }
-  function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(_){return false;} }
-  function openDB(){
-    if(dbP)return dbP;
-    if(typeof indexedDB==="undefined")return Promise.resolve(null);
-    dbP=new Promise(function(resolve){
-      try{
-        var req=indexedDB.open(DB_NAME,DB_VER);
-        req.onupgradeneeded=function(e){
-          var db=e.target.result;
-          if(!db.objectStoreNames.contains("files"))db.createObjectStore("files",{keyPath:"name"});
-          if(!db.objectStoreNames.contains("history")){
-            var hs=db.createObjectStore("history",{keyPath:"id"});
-            hs.createIndex("by_name","name",{unique:false});
-          }
-        };
-        req.onsuccess=function(){resolve(req.result);};
-        req.onerror=function(){resolve(null);};
-      }catch(_){resolve(null);}
-    });
-    return dbP;
-  }
-  function withStore(storeName,mode,fn){
-    return openDB().then(function(db){
-      if(!db)return null;
-      return new Promise(function(resolve,reject){
-        try{
-          var tx=db.transaction(storeName,mode);
-          var st=tx.objectStore(storeName);
-          var res=fn(st);
-          tx.oncomplete=function(){resolve(res&&res.result!==undefined?res.result:res);};
-          tx.onerror=function(){reject(tx.error);};
-        }catch(err){reject(err);}
-      });
-    });
-  }
-  function fmtTs(){
-    var d=new Date();
-    var p=function(n){return n<10?"0"+n:String(n);};
-    return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
-  }
-  function listFiles(){
-    return withStore("files","readonly",function(st){return st.getAll();}).then(function(rows){
-      if(rows===null){
-        var map=lsGet(LS_FILES,{});
-        rows=Object.keys(map).map(function(k){return map[k];});
-      }
-      return (rows||[]).map(function(r){
-        return {name:r.name,title:r.title||titleOf(r.data),nodes:r.nodes||((r.data&&r.data.nodes)||[]).length,size:r.size||0,mtime:r.mtime||0};
-      }).sort(function(a,b){return b.mtime-a.mtime;});
-    }).catch(function(){return [];});
-  }
-  function getFile(name){
-    return withStore("files","readonly",function(st){return st.get(name);}).then(function(r){
-      if(r===null){var map=lsGet(LS_FILES,{});return (map[name]&&map[name].data)||null;}
-      return (r&&r.data)||null;
-    }).catch(function(){return null;});
-  }
-  function listHistRaw(name){
-    return withStore("history","readonly",function(st){return st.index("by_name").getAll(name);}).then(function(rows){
-      if(rows===null){
-        var all=lsGet(LS_HIST,{});
-        rows=all[name]||[];
-      }
-      return (rows||[]).slice().sort(function(a,b){return a.mtime-b.mtime;});
-    }).catch(function(){return [];});
-  }
-  function saveSnapshot(name,doc,force){
-    return listHistRaw(name).then(function(items){
-      var curKey=nodesKey(doc);
-      if(!force&&items.length&&nodesKey(items[items.length-1].data)===curKey)return null;
-      var base=fmtTs(),ts=base,i=1;
-      var existing={};items.forEach(function(it){existing[it.ts]=1;});
-      while(existing[ts])ts=base+"-"+(i++);
-      var jsonLen=JSON.stringify(doc).length;
-      var rec={id:name+"::"+ts,name:name,ts:ts,mtime:Date.now(),nodes:(doc.nodes||[]).length,size:jsonLen,data:doc};
-      return openDB().then(function(db){
-        if(!db){
-          var all=lsGet(LS_HIST,{});
-          var arr=all[name]||[];
-          arr.push(rec);
-          if(arr.length>SNAP_MAX)arr=arr.slice(arr.length-SNAP_MAX);
-          all[name]=arr;
-          lsSet(LS_HIST,all);
-          return ts;
-        }
-        return withStore("history","readwrite",function(st){
-          st.put(rec);
-          if(items.length>=SNAP_MAX){
-            items.slice(0,items.length-SNAP_MAX+1).forEach(function(old){st.delete(old.id);});
-          }
-          return ts;
-        }).then(function(){return ts;});
-      });
-    }).catch(function(){return null;});
-  }
-  function saveFile(name,doc,forceSnap){
-    var jsonLen=JSON.stringify(doc).length;
-    var rec={name:name,title:titleOf(doc),nodes:(doc.nodes||[]).length,size:jsonLen,mtime:Date.now(),data:doc};
-    return openDB().then(function(db){
-      if(!db){
-        var map=lsGet(LS_FILES,{});
-        map[name]=rec;
-        lsSet(LS_FILES,map);
-        return saveSnapshot(name,doc,forceSnap);
-      }
-      return withStore("files","readwrite",function(st){st.put(rec);}).then(function(){
-        return saveSnapshot(name,doc,forceSnap);
-      });
-    });
-  }
-  function deleteFile(name){
-    return openDB().then(function(db){
-      if(!db){
-        var map=lsGet(LS_FILES,{});delete map[name];lsSet(LS_FILES,map);
-        var all=lsGet(LS_HIST,{});delete all[name];lsSet(LS_HIST,all);
-        return;
-      }
-      return withStore("files","readwrite",function(st){st.delete(name);}).then(function(){
-        return listHistRaw(name).then(function(items){
-          if(!items.length)return;
-          return withStore("history","readwrite",function(st){
-            items.forEach(function(it){st.delete(it.id);});
-          });
-        });
-      });
-    });
-  }
-  function listHistory(name){
-    return listHistRaw(name).then(function(items){
-      return items.slice().reverse().map(function(it){return {ts:it.ts,size:it.size,mtime:it.mtime,nodes:it.nodes};});
-    });
-  }
-  function getHistoryItem(name,ts){
-    return listHistRaw(name).then(function(items){
-      var hit=items.filter(function(it){return it.ts===ts;})[0];
-      return hit?hit.data:null;
-    });
-  }
-  function deleteHistoryItem(name,ts){
-    return openDB().then(function(db){
-      if(!db){
-        var all=lsGet(LS_HIST,{});
-        all[name]=(all[name]||[]).filter(function(it){return it.ts!==ts;});
-        lsSet(LS_HIST,all);
-        return;
-      }
-      return withStore("history","readwrite",function(st){st.delete(name+"::"+ts);});
-    });
-  }
-  return {listFiles:listFiles,getFile:getFile,saveFile:saveFile,deleteFile:deleteFile,saveSnapshot:saveSnapshot,listHistory:listHistory,getHistoryItem:getHistoryItem,deleteHistoryItem:deleteHistoryItem};
-})();
-
-/* ---------- 存取 & 断点续存（100% 本地） ---------- */
+/* ---------- 自动断点暂存（100% 本地） ---------- */
 var saveState=document.getElementById("savestate");
 function setStatus(s){
   if(!saveState)return;
-  saveState.textContent=s==="saving"?"保存中…":s==="saved"?"✓ 已存本地库":s==="dirty"?"● 有未保存改动":s==="draft"?"✓ 本机断点已存":s==="restored"?"✓ 已从断点恢复":s==="restored_dirty"?"✓ 已恢复断点（待保存）":s==="error"?"⚠ 保存失败":s==="local"?"✓ 本机断点已存":"";
-  saveState.style.color=(s==="saved"||s==="restored")?"#0e9b6c":(s==="error"?"#d94a44":(s==="dirty"||s==="draft"||s==="restored_dirty"||s==="local")?"#e0772f":"#8b96ab");
+  saveState.textContent=s==="dirty"?"● 暂存中…":s==="draft"?"✓ 已暂存本机":s==="restored"?"✓ 已从断点恢复":s==="local"?"✓ 已暂存本机":"";
+  saveState.style.color=(s==="restored"||s==="draft"||s==="local")?"#0e9b6c":(s==="dirty"?"#e0772f":"#8b96ab");
 }
 function isInEditor(){
   var st=document.getElementById("start");
@@ -1151,7 +1458,6 @@ function payload(includeLive){
   var noteOpen=!!(notesEl&&notesEl.classList.contains("on"));
   return {
     v:2,
-    name:curName||null,
     localName:curLocalName||null,
     dirty:dirty,
     savedAt:Date.now(),
@@ -1164,8 +1470,8 @@ function payload(includeLive){
       return {
         id:n.id,
         text:editingLive[n.id]!==undefined?editingLive[n.id]:n.text,
-        parent:n.parent,depth:n.depth,color:n.color,collapsed:n.collapsed,x:n.x,y:n.y,
-        note:liveNote,mark:n.mark||"",todo:n.todo||"",links:n.links||[]
+        parent:n.parent,depth:n.depth,side:n.side||"",color:n.color,collapsed:n.collapsed,x:n.x,y:n.y,
+        note:liveNote,mark:n.mark||"",todo:n.todo||"",links:cloneLinks(n.links)
       };
     })
   };
@@ -1185,15 +1491,10 @@ function save(){
   var immediateJson=JSON.stringify(payload(true));
   writeLocalCheckpoint(immediateJson);
   saveT=setTimeout(function(){
-    var doc=payload(true);
-    var json=JSON.stringify(doc);
+    var json=JSON.stringify(payload(true));
     writeLocalCheckpoint(json);
     setStatus(offline?"local":"draft");
-    if(!offline&&Date.now()-lastSnap>180000){
-      lastSnap=Date.now();
-      LocalStore.saveSnapshot(curName||"未命名图.mmap",doc,false);
-    }
-  },300);
+  },250);
 }
 function saveView(){
   if(!isInEditor())return;
@@ -1231,6 +1532,7 @@ var savedDoc=null;
 function needsLayout(){ return nodes.every(function(n){return !n.x&&!n.y;}); }
 function bootFrom(d,src,name){
   clearUndo();
+  selLink=null;if(linkMode)exitLink();
   if(!(d&&d.nodes&&d.nodes.length)){ nodes=[];rootId=null;sel=null;render();setStatus("");showStart();return; }
   loadData(d);
   if(d.view&&typeof d.view.x==="number"){view={x:d.view.x,y:d.view.y,s:d.view.s||1};}
@@ -1239,10 +1541,9 @@ function bootFrom(d,src,name){
   render();
   if(needsLayout()){ layoutAll();place();drawEdges();drawLinks();setTimeout(function(){centerRoot(0.6);},30); }
   else applyView();
-  hideStart(); closeHistory();
-  if(src==="library"){ curName=name||null; curLocalName=null; dirty=false; setStatus("saved"); }
-  else if(src==="local"){ curName=null; curLocalName=name||null; dirty=false; setStatus(""); }
-  else { curName=(d&&d.name)||null; curLocalName=(d&&d.localName)||null; dirty=!!(d&&d.dirty); setStatus(src==="checkpoint"?(dirty?"restored_dirty":"restored"):(dirty?"draft":"saved")); }
+  hideStart();
+  if(src==="local"){ curLocalName=name||null; dirty=false; setStatus("draft"); }
+  else { curLocalName=(d&&d.localName)||null; dirty=!!(d&&d.dirty); setStatus(src==="checkpoint"?"restored":"draft"); }
   if(d.noteOpen&&sel){notesEl.classList.add("on");syncNotePanel();}
   else{notesEl.classList.remove("on");}
   updateTitle(); paintSwatches();
@@ -1250,7 +1551,7 @@ function bootFrom(d,src,name){
   writeLocalCheckpoint(JSON.stringify(payload()));
   if(src==="checkpoint"){
     var rNode=byId(rootId),tsTxt=fmtTime(d.savedAt);
-    toast("已从本机断点恢复「"+(rNode?rNode.text:"思维导图")+"」"+(tsTxt?"（"+tsTxt+(dirty?" · 含未保存改动":"")+"）":""));
+    toast("已从本机断点恢复「"+(rNode?rNode.text:"思维导图")+"」"+(tsTxt?"（"+tsTxt+"）":""));
   }
 }
 function showStart(){
@@ -1263,12 +1564,11 @@ function showStart(){
     if(savedDoc&&savedDoc.nodes&&savedDoc.nodes.length){
       var root=savedDoc.nodes.filter(function(n){return n.parent===null;})[0]||{text:"(无名)"};
       var tsTxt=fmtTime(savedDoc.savedAt);
-      var hasDirty=!!savedDoc.dirty;
-      rb.className="on"+(hasDirty?" dirty":"");
+      rb.className="on";
       var rt=document.createElement("div"); rt.className="rt";
-      rt.textContent=hasDirty?"⚡ 检测到上次未保存的编辑断点":"↻ 发现上次编辑断点";
+      rt.textContent="↻ 发现上次编辑断点";
       var rm=document.createElement("div"); rm.className="rm";
-      rm.textContent="「"+root.text+"」 · "+savedDoc.nodes.length+" 个节点"+(tsTxt?" · 保存于 "+tsTxt:"")+(savedDoc.name?" · 文件："+savedDoc.name:"")+"。请选择继续上次编辑、新建空白图，或打开其他导图：";
+      rm.textContent="「"+root.text+"」 · "+savedDoc.nodes.length+" 个节点"+(tsTxt?" · 暂存于 "+tsTxt:"")+"。请选择继续上次编辑、新建空白图，或打开其他导图：";
       var ra=document.createElement("div"); ra.className="ra";
       var bCont=document.createElement("button"); bCont.className="primary";
       bCont.textContent="↻ 继续上次编辑";
@@ -1281,9 +1581,9 @@ function showStart(){
       bOther.onclick=function(){$("fileIn").click();};
       var bClr=document.createElement("button"); bClr.className="clr";
       bClr.textContent="🗑 清除断点";
-      bClr.title="清除最近一次自动保存的断点草稿";
+      bClr.title="清除最近一次自动暂存的断点草稿";
       bClr.onclick=function(){
-        if(savedDoc&&savedDoc.dirty&&!window.confirm("当前断点包含未保存到文件库的改动，确定清除吗？"))return;
+        if(!window.confirm("确定清除本机暂存的断点草稿吗？"))return;
         clearDraftCheckpoint(); savedDoc=null; showStart(); toast("已清除断点草稿");
       };
       ra.appendChild(bCont); ra.appendChild(bNew); ra.appendChild(bOther); ra.appendChild(bClr);
@@ -1297,31 +1597,6 @@ function showStart(){
     bi.onclick=function(){bootFrom(INITIAL,"local");};
     q.appendChild(bi);
   }
-  var fl=document.getElementById("files");
-  if(fl){
-    fl.innerHTML="";
-    if(!offline){
-      LocalStore.listFiles().then(function(fs){
-        if(!fs.length)return;
-        var h=document.createElement("h4"); h.textContent="本地文件库中的导图（"+fs.length+"）"; fl.appendChild(h);
-        fs.forEach(function(f){
-          var row=document.createElement("div"); row.className="fi";
-          var b=document.createElement("b"); b.textContent=f.title;
-          var s=document.createElement("small");
-          s.textContent=new Date(f.mtime).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})+" · "+f.nodes+"节点";
-          var o=document.createElement("button"); o.textContent="打开"; o.className="primary";
-          o.onclick=function(){openLocalLibraryFile(f.name);};
-          var d=document.createElement("button"); d.textContent="🗑";
-          d.onclick=function(){
-            if(!window.confirm("从本地文件库删除「"+f.name+"」及其全部历史版本？"))return;
-            LocalStore.deleteFile(f.name).then(function(){showStart();});
-          };
-          row.appendChild(b); row.appendChild(s); row.appendChild(o); row.appendChild(d);
-          fl.appendChild(row);
-        });
-      }).catch(function(){});
-    }
-  }
   if(!offline&&location.protocol!=="file:"){
     fetch("犀码互联商业地图.json").then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
       var b=document.createElement("button");
@@ -1333,21 +1608,19 @@ function showStart(){
 }
 function hideStart(){ var st=document.getElementById("start"); if(st)st.classList.add("off"); setInEditor(true); }
 function newMap(){
-  if(nodes.length>1&&!window.confirm("新建会替换当前这张图。要先「💾 保存」或「⬇ 导出」备份吗？"))return;
-  if(nodes.length===0&&savedDoc&&savedDoc.dirty&&!window.confirm("新建会覆盖上次未保存的断点草稿，确定新建空白图吗？"))return;
+  if(nodes.length>1&&!window.confirm("新建会替换当前这张图。要先「⬇ 导出到本地」备份吗？"))return;
+  if(nodes.length===0&&savedDoc&&!window.confirm("新建会覆盖上次的断点草稿，确定新建空白图吗？"))return;
   clearUndo();
-  nodes=[];seq=1;rootId=null;sel=null;
-  curName=null;curLocalName=null;
+  selLink=null;if(linkMode)exitLink();
+  nodes=[];seq=1;rootId=null;sel=null;curLocalName=null;
   build({text:"中心主题"},null,0,"#22304d");
   render();layoutAll();place();drawEdges();drawLinks();
   hideStart();centerRoot(0.9);save();paintSwatches();
   setTimeout(function(){ if(rootId)startEdit(rootId); },60);
 }
 function init(){
-  if(INITIAL){                        // 单文件离线版：数据内嵌，完全本地运行
-    offline=true; curName=null; curLocalName=null; dirty=false;
-    var bf=document.getElementById("bFiles"); if(bf)bf.style.display="none";
-    var bh=document.getElementById("bHist"); if(bh)bh.style.display="none";
+  if(INITIAL){
+    offline=true; curLocalName=null; dirty=false;
     var offCkpt=parseLocal();
     if(offCkpt&&offCkpt.nodes&&offCkpt.nodes.length&&(offCkpt.dirty||offCkpt.inEditor)){
       savedDoc=offCkpt;
@@ -1362,114 +1635,82 @@ function init(){
   nodes=[];rootId=null;sel=null;render();showStart();
 }
 
-/* ---------- 本地文件库 / 保存 / 历史版本 ---------- */
 function updateTitle(){
   var el=document.querySelector("#toolbar .brand small"); if(!el)return;
-  var base=offline?"离线单文件 · 改完用 ⬇ 导出到本地":(curName?"本地库："+curName:(curLocalName?"磁盘文件："+curLocalName:"本地工作台 · 数据仅存本机浏览器"));
-  el.textContent=base+(dirty?" · 未保存":"");
+  el.textContent=offline?"离线单文件 · 改完用 ⬇ 导出到本地":(curLocalName?"打开自："+curLocalName:"本地工作台 · 数据仅存本机浏览器");
 }
 function toast(msg){
   var t=document.getElementById("toast"); if(!t)return;
   t.textContent=msg; t.classList.add("on");
-  clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("on");},2400);
+  clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("on");},2600);
 }
-function baseName(){ return (curName||curLocalName||"思维导图").replace(/\.(mmap|json)$/i,""); }
-function openLocalLibraryFile(name){
-  LocalStore.getFile(name).then(function(d){
-    if(!d)throw new Error("文件不存在");
-    bootFrom(d,"library",name);
-  }).catch(function(e){ alert("打开失败："+e.message); });
+function baseName(){
+  var r=rootId?byId(rootId):null;
+  return (curLocalName||(r&&r.text)||"多宝思维导图").replace(/\.(mmap|json)$/i,"");
 }
-function saveFileToLibrary(name){
-  dirty=false; setStatus("saving"); updateTitle();
-  var doc=payload();
-  doc.name=name; doc.dirty=false;
-  var json=JSON.stringify(doc);
-  LocalStore.saveFile(name,doc,true).then(function(snap){
-    curName=name; curLocalName=null; dirty=false; lastSnap=Date.now();
-    setStatus("saved"); updateTitle();
-    writeLocalCheckpoint(json);
-    savedDoc=doc;
-    toast("已保存到本地文件库："+name+(snap?"（已留历史快照）":""));
-  }).catch(function(e){
-    dirty=true; setStatus("error"); updateTitle();
-    alert("保存失败："+(e&&e.message||e));
+
+/* ---------- 意见与建议收集（本地持久化 + 复制/导出） ---------- */
+var FB_KEY="duobao-mindmap-feedback-v1",fbType="功能建议";
+function loadFeedbacks(){ try{var v=localStorage.getItem(FB_KEY);return v?JSON.parse(v):[];}catch(_){return [];} }
+function saveFeedbacks(arr){ try{localStorage.setItem(FB_KEY,JSON.stringify(arr));}catch(_){} }
+function renderFeedbacks(){
+  var box=document.getElementById("fbHist");if(!box)return;
+  var list=loadFeedbacks();
+  box.innerHTML="";
+  if(!list.length){
+    box.innerHTML='<div style="text-align:center;color:#9aa5b8;font-size:12px;padding:10px 0">暂无已提交的意见建议</div>';
+    return;
+  }
+  var hd=document.createElement("div");hd.className="fb-hist-hd";
+  var sp=document.createElement("span");sp.textContent="本机已记录的建议（"+list.length+"）";hd.appendChild(sp);
+  var bCopy=document.createElement("button");bCopy.textContent="📋 复制全部";
+  bCopy.onclick=function(){
+    var txt=list.map(function(it,i){
+      return (i+1)+". ["+it.type+"] "+new Date(it.ts).toLocaleString("zh-CN")+"\n"+it.text+(it.contact?"\n联系方式："+it.contact:"");
+    }).join("\n\n");
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){toast("已复制全部意见建议到剪贴板");}).catch(function(){download("多宝工具-意见建议.txt",txt,"text/plain");toast("已导出为文本文件");});
+    }else{
+      download("多宝工具-意见建议.txt",txt,"text/plain");toast("已导出为文本文件");
+    }
+  };
+  var bExp=document.createElement("button");bExp.textContent="⬇ 导出";
+  bExp.onclick=function(){
+    var txt=list.map(function(it,i){
+      return (i+1)+". ["+it.type+"] "+new Date(it.ts).toLocaleString("zh-CN")+"\n"+it.text+(it.contact?"\n联系方式："+it.contact:"");
+    }).join("\n\n");
+    download("多宝工具-意见建议.txt",txt,"text/plain");toast("已导出意见建议记录");
+  };
+  hd.appendChild(bCopy);hd.appendChild(bExp);box.appendChild(hd);
+  list.slice().reverse().forEach(function(it){
+    var row=document.createElement("div");row.className="fb-it";
+    var top=document.createElement("div");top.className="fb-it-top";
+    var tag=document.createElement("span");tag.className="fb-it-tag";tag.textContent=it.type;
+    var tm=document.createElement("span");tm.textContent=new Date(it.ts).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+    var delB=document.createElement("button");delB.className="fb-it-del";delB.textContent="🗑";delB.title="删除此条";
+    delB.onclick=function(){
+      saveFeedbacks(loadFeedbacks().filter(function(x){return x.id!==it.id;}));
+      renderFeedbacks();
+    };
+    top.appendChild(tag);top.appendChild(tm);
+    if(it.contact){var ct=document.createElement("span");ct.textContent="· "+it.contact;top.appendChild(ct);}
+    top.appendChild(delB);
+    var txt=document.createElement("div");txt.className="fb-it-txt";txt.textContent=it.text;
+    row.appendChild(top);row.appendChild(txt);box.appendChild(row);
   });
 }
-function saveToLocal(name){
-  var target=name||baseName()+".mmap";
-  dirty=false;
-  var json=JSON.stringify(payload(),null,2);
-  var blob=new Blob([json],{type:"application/json"});
-  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=target;
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ try{document.body.removeChild(a);}catch(_){} URL.revokeObjectURL(a.href); },2000);
-  setStatus("saved"); updateTitle();
-  writeLocalCheckpoint(JSON.stringify(payload()));
-  toast("已下载到磁盘："+target+"（浏览器不能直写原磁盘文件，用它覆盖即可）");
+function openFeedback(){
+  var el=document.getElementById("feedback");if(!el)return;
+  el.classList.add("on");renderFeedbacks();
+  var ta=document.getElementById("fbText");if(ta)setTimeout(function(){ta.focus();},20);
 }
-function saveAs(){
-  var v=window.prompt("保存到本机文件库，文件名：", baseName());
-  if(v===null)return; v=v.trim(); if(!v)return;
-  saveFileToLibrary(/\.mmap$/i.test(v)?v:v+".mmap");
-}
-function manualSave(){
-  if(offline){ saveToLocal(baseName()+".mmap"); return; }
-  if(curName){ saveFileToLibrary(curName); return; }
-  if(curLocalName){ saveToLocal(curLocalName); return; }
-  saveAs();
-}
-function closeHistory(){ var el=document.getElementById("history"); if(el)el.classList.remove("on"); }
-function toggleHistory(){
-  var el=document.getElementById("history"); if(!el)return;
-  if(el.classList.contains("on")){ el.classList.remove("on"); return; }
-  openHistory();
-}
-function openHistory(){
-  var el=document.getElementById("history"),list=document.getElementById("histList"),t=document.getElementById("histTitle");
-  if(!el||!list)return;
-  var name=curName||null;
-  el.classList.add("on");
-  t.textContent="本地历史版本 · "+(name||"未命名图（未保存过）");
-  if(!name){ list.innerHTML='<div class="empty">这张图还没存进本地文件库，没有历史版本。<br>先点「💾 保存」给它起个名字。</div>'; return; }
-  list.innerHTML='<div class="empty">加载中…</div>';
-  LocalStore.listHistory(name).then(function(items){
-    if(!items.length){ list.innerHTML='<div class="empty">还没有历史版本。</div>'; return; }
-    list.innerHTML="";
-    items.forEach(function(it){
-      var d=new Date(it.mtime);
-      var row=document.createElement("div"); row.className="it";
-      var tt=document.createElement("div"); tt.className="t";
-      tt.appendChild(document.createTextNode(d.toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})));
-      var sm=document.createElement("small"); sm.textContent=it.nodes+" 个节点 · "+Math.max(1,Math.round(it.size/1024))+" KB";
-      tt.appendChild(sm);
-      var rb=document.createElement("button"); rb.textContent="恢复"; rb.className="primary";
-      rb.onclick=function(){
-        if(!window.confirm("把画布换成这份历史版本？（当前改动会先自动存断点）"))return;
-        LocalStore.getHistoryItem(name,it.ts).then(function(doc){
-          if(!doc)throw new Error("快照不存在");
-          save(); bootFrom(doc,"library",curName);
-          dirty=true; setStatus("dirty"); updateTitle(); closeHistory();
-          toast("已恢复到画布（点「💾 保存」确认覆盖原文件）");
-        }).catch(function(e){ alert("恢复失败："+e.message); });
-      };
-      var db=document.createElement("button"); db.textContent="🗑";
-      db.onclick=function(){ LocalStore.deleteHistoryItem(name,it.ts).then(function(){openHistory();}); };
-      row.appendChild(tt); row.appendChild(rb); row.appendChild(db);
-      list.appendChild(row);
-    });
-  }).catch(function(){ list.innerHTML='<div class="empty">读取历史失败</div>'; });
-}
-document.addEventListener("keydown",function(e){
-  if((e.ctrlKey||e.metaKey)&&(e.key==="s"||e.key==="S")){ e.preventDefault(); manualSave(); }
-},true);
+function closeFeedback(){var el=document.getElementById("feedback");if(el)el.classList.remove("on");}
 
 /* ---------- 导出（多格式） ---------- */
 function download(name,data,mime){
   var blob=(data instanceof Blob)?data:new Blob([data],{type:(mime||"text/plain")+";charset=utf-8"});
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
   document.body.appendChild(a); a.click();
-  // 不能点完就移除：文件名要等浏览器登记完下载才生效（否则会存成 “download”）
   setTimeout(function(){ try{document.body.removeChild(a);}catch(_){} URL.revokeObjectURL(a.href); },2000);
 }
 function treeLines(){
@@ -1492,7 +1733,12 @@ function treeLines(){
 }
 function toMarkdown(){
   var lines=treeLines(),links=[];
-  nodes.forEach(function(n){ (n.links||[]).forEach(function(t){ var o=byId(t); if(o)links.push("- "+n.text+" → "+o.text); }); });
+  nodes.forEach(function(n){
+    (n.links||[]).forEach(function(l){
+      var tid=typeof l==="string"?l:l.to;
+      var o=byId(tid); if(o)links.push("- "+n.text+" → "+o.text);
+    });
+  });
   if(links.length){ lines.push(""); lines.push("## 跨分支连线"); lines.push(""); lines=lines.concat(links); }
   return lines.join("\n")+"\n";
 }
@@ -1547,9 +1793,9 @@ function toHtml(){
   };
   var fallbackDomHtml=function(){
     var clone=document.documentElement.cloneNode(true);
-    var clrIds=["nodes","edgeLayer","links","levelbar","files","resumeBox","quick","histList"];
+    var clrIds=["nodes","edgeLayer","links","linkHandles","levelbar","resumeBox","quick","fbHist"];
     clrIds.forEach(function(id){var el=clone.querySelector("#"+id);if(el)el.innerHTML="";});
-    ["history","export","help","notes","toast","dropmask"].forEach(function(id){
+    ["export","help","feedback","notes","toast","dropmask","linkbar","linkModeBanner"].forEach(function(id){
       var el=clone.querySelector("#"+id);if(el)el.classList.remove("on");
     });
     var st=clone.querySelector("#start");if(st)st.classList.remove("off");
@@ -1666,11 +1912,12 @@ function mdToTree(text){
 function applyTree(tree){
   if(!tree||!tree.text){alert("导入内容为空或格式不认识");return;}
   clearUndo();
+  selLink=null;if(linkMode)exitLink();
   nodes=[];seq=1;rootId=null;sel=null;
   build(tree,null,0,"#22304d");
   render();layoutAll();place();drawEdges();drawLinks();fit();
   hideStart();
-  curName=null; curLocalName=null;
+  curLocalName=null;
   save(); updateTitle();
   paintSwatches();
 }
@@ -1762,14 +2009,23 @@ function openCtxMenu(id,x,y){
     addBtn("展开此分支全部节点","",function(){expandAll(id);});
     addSep();
   }
-  addBtn("添加子节点","Tab",function(){addChild(id);});
+  if(n.id===rootId){
+    addBtn("在右侧添加子节点","Tab",function(){addChild(id,{side:"right"});});
+    addBtn("在左侧添加子节点","Shift+Tab",function(){addChild(id,{side:"left"});});
+  }else{
+    addBtn("添加子节点","Tab",function(){addChild(id);});
+  }
   if(n.parent!==null){
     addBtn("添加同级节点","Enter",function(){addSibling(id);});
-    var sibs=kidsOf(n.parent),sidx=sibs.indexOf(n);
+    if(n.parent===rootId){
+      var isL=(nodeSide(n)==="left");
+      addBtn(isL?"移到中心右侧":"移到中心左侧","",function(){switchBranchSide(id,isL?"right":"left");});
+    }
+    var sibs=sibsOf(n),sidx=sibs.indexOf(n);
     if(sidx>0)addBtn("上移一位","Alt+↑",function(){moveSibling(id,-1);});
     if(sidx>=0&&sidx<sibs.length-1)addBtn("下移一位","Alt+↓",function(){moveSibling(id,1);});
   }
-  addBtn("改名","F2",function(){startEdit(id);});
+  addBtn("编辑","F2",function(){startEdit(id);});
   addBtn("备注","Alt+N",function(){openNotes();});
   if(n.parent!==null){addSep();addBtn("删除节点","Del",function(){del(id);},"danger");}
   ctxMenu.style.display="block";
@@ -1800,6 +2056,23 @@ document.addEventListener("pointerdown",function(e){
 });
 canvas.addEventListener("pointerdown",function(e){
   if(e.button!==0&&e.pointerType==="mouse")return;
+  var lh=e.target.closest("[data-lh]");
+  if(lh){
+    var cur=getSelLinkObj();
+    if(cur){
+      e.preventDefault();e.stopPropagation();
+      linkDrag={kind:lh.getAttribute("data-lh"),from:selLink.from,idx:selLink.idx,preSnap:takeSnap(),moved:false};
+      try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+      return;
+    }
+  }
+  var hitLink=e.target.closest("#links path.hit");
+  if(hitLink){
+    e.preventDefault();e.stopPropagation();
+    setLinkFrom(null);
+    selectLink(hitLink.getAttribute("data-from"),parseInt(hitLink.getAttribute("data-idx"),10));
+    return;
+  }
   if(e.target.closest(".node-acts")||e.target.closest(".add")||e.target.closest(".tgl")||e.target.closest(".col-cnt"))return;
   if(e.target.isContentEditable||e.target.closest('[contenteditable="true"]'))return;
   var editingEl=e.target.closest(".node.editing");
@@ -1811,7 +2084,22 @@ canvas.addEventListener("pointerdown",function(e){
   var nodeEl=e.target.closest(".node");
   if(nodeEl){
     var id=nodeEl.getAttribute("data-id");
-    if(linkFrom){ createLink(linkFrom,id); exitLink(); e.preventDefault(); return; }
+    if(linkMode){
+      e.preventDefault();
+      if(linkFrom&&linkFrom!==id){
+        var fId=linkFrom;
+        setLinkFrom(null);
+        createLink(fId,id);
+      }else if(linkFrom===id){
+        setLinkFrom(null);
+      }else{
+        setLinkFrom(id);
+        linkCreateDrag={from:id,startX:e.clientX,startY:e.clientY,dragged:false};
+        try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+      }
+      return;
+    }
+    if(selLink){selLink=null;drawLinks();}
     var now=Date.now();
     if(lastTap.id===id&&now-lastTap.t<420){lastTap={id:null,t:0};setSel(id);startEdit(id);e.preventDefault();return;}
     lastTap={id:id,t:now};
@@ -1823,12 +2111,45 @@ canvas.addEventListener("pointerdown",function(e){
     try{canvas.setPointerCapture(e.pointerId);}catch(_){}
     e.preventDefault();
   }else{
+    if(linkFrom){setLinkFrom(null);}
+    if(selLink){selLink=null;drawLinks();}
     pan={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};
     canvas.classList.add("pan");
     try{canvas.setPointerCapture(e.pointerId);}catch(_){}
   }
 });
 canvas.addEventListener("pointermove",function(e){
+  if(linkDrag){
+    var cur=getSelLinkObj();if(!cur)return;
+    var rect=canvas.getBoundingClientRect();
+    var wx=(e.clientX-rect.left-view.x)/view.s,wy=(e.clientY-rect.top-view.y)/view.s;
+    linkDrag.moved=true;
+    var targetNode=byId(cur.lnk.to);
+    if(linkDrag.kind==="from"){
+      cur.lnk.fromAnchor=nearestAnchor(cur.fromNode,wx,wy);
+    }else if(linkDrag.kind==="to"&&targetNode){
+      cur.lnk.toAnchor=nearestAnchor(targetNode,wx,wy);
+    }else if(linkDrag.kind==="curve"&&targetNode){
+      var p1=anchorPt(cur.fromNode,cur.lnk.fromAnchor,targetNode);
+      var p2=anchorPt(targetNode,cur.lnk.toAnchor,cur.fromNode);
+      var mx=2*wx-0.5*(p1.x+p2.x),my=2*wy-0.5*(p1.y+p2.y);
+      var dx=p2.x-p1.x,dy=p2.y-p1.y,len2=dx*dx+dy*dy||1;
+      var rx=mx-(p1.x+p2.x)/2,ry=my-(p1.y+p2.y)/2;
+      cur.lnk.along=Math.max(-1.2,Math.min(1.2,(rx*dx+ry*dy)/len2));
+      cur.lnk.perp=Math.max(-1.8,Math.min(1.8,(-rx*dy+ry*dx)/len2));
+    }
+    drawLinks();
+    return;
+  }
+  if(linkCreateDrag){
+    var dcx=e.clientX-linkCreateDrag.startX,dcy=e.clientY-linkCreateDrag.startY;
+    if(Math.hypot(dcx,dcy)>8)linkCreateDrag.dragged=true;
+  }
+  if(linkMode&&linkFrom){
+    var r0=canvas.getBoundingClientRect();
+    linkMouse={x:(e.clientX-r0.left-view.x)/view.s,y:(e.clientY-r0.top-view.y)/view.s};
+    drawLinks();
+  }
   if(drag){
     var dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
     if(!drag.moved&&Math.sqrt(dx*dx+dy*dy)<4)return;
@@ -1848,19 +2169,40 @@ canvas.addEventListener("pointermove",function(e){
       setReorder(reord);
     }else{
       setReorder(null);
-      setDrop(hit?hit.id:null);
+      if(hit&&hit.id===rootId){
+        var dropSide=(pwx<hit.x+hit.w/2)?"left":"right";
+        setDrop(hit.id,dropSide);
+      }else{
+        setDrop(hit?hit.id:null);
+      }
     }
   }else if(pan){
     view.x=pan.vx+(e.clientX-pan.x);view.y=pan.vy+(e.clientY-pan.y);applyView();
   }
 });
 function endPointer(e){
+  if(linkCreateDrag){
+    var lcd=linkCreateDrag;linkCreateDrag=null;
+    if(lcd.dragged){
+      var dst=nodeAt(e.clientX,e.clientY,[lcd.from]);
+      setLinkFrom(null);
+      if(dst)createLink(lcd.from,dst.id);
+    }
+    try{canvas.releasePointerCapture(e.pointerId);}catch(_){}
+    return;
+  }
+  if(linkDrag){
+    if(linkDrag.moved){pushUndo(linkDrag.preSnap);save();}
+    linkDrag=null;
+    try{canvas.releasePointerCapture(e.pointerId);}catch(_){}
+    return;
+  }
   if(drag){
     var dn=byId(drag.id);if(dn&&dn._el)dn._el.classList.remove("dragging");
     if(drag.moved){
       var ok=false;
-      if(drag.lastDrop)ok=reparent(drag.id,drag.lastDrop,drag.preSnap);
-      else if(drag.lastReorder)ok=reorderNode(drag.id,drag.lastReorder.slot,drag.preSnap);
+      if(drag.lastDrop)ok=reparent(drag.id,drag.lastDrop,drag.preSnap,drag.lastDropSide);
+      else if(drag.lastReorder)ok=reorderNode(drag.id,drag.lastReorder.slot,drag.preSnap,drag.lastReorder.targetSide);
       setDrop(null);setReorder(null);
       if(!ok){pushUndo(drag.preSnap);save();}
     }else{
@@ -1875,9 +2217,10 @@ function endPointer(e){
 canvas.addEventListener("pointerup",endPointer);
 canvas.addEventListener("pointercancel",function(e){
   if(drag){var dn=byId(drag.id);if(dn&&dn._el)dn._el.classList.remove("dragging");}
-  setDrop(null);setReorder(null);drag=null;pan=null;canvas.classList.remove("pan");
+  setDrop(null);setReorder(null);drag=null;pan=null;linkDrag=null;linkCreateDrag=null;canvas.classList.remove("pan");
 });
 canvas.addEventListener("dblclick",function(e){
+  if(linkMode)return;
   if(e.target.isContentEditable||e.target.closest(".node.editing")||e.target.closest(".node-acts"))return;
   var nodeEl=e.target.closest(".node");if(!nodeEl)return;
   startEdit(nodeEl.getAttribute("data-id"));
@@ -1885,8 +2228,10 @@ canvas.addEventListener("dblclick",function(e){
 nodesEl.addEventListener("click",function(e){
   var nodeEl=e.target.closest(".node");if(!nodeEl)return;
   var id=nodeEl.getAttribute("data-id");
+  var al=e.target.closest(".add-left");
+  if(al){addChild(id,{side:"left"});return;}
   var a=e.target.closest(".add");
-  if(a){addChild(id);return;}
+  if(a){addChild(id,{side:id===rootId?"right":nodeSide(byId(id))});return;}
   var t=e.target.closest(".tgl");
   if(t){toggle(id);return;}
   var c=e.target.closest(".col-cnt");
@@ -1897,11 +2242,6 @@ nodesEl.addEventListener("contextmenu",function(e){
   e.preventDefault();
   openCtxMenu(nodeEl.getAttribute("data-id"),e.clientX,e.clientY);
 });
-linkLayer.addEventListener("click",function(e){
-  var hit=e.target.closest(".hit"); if(!hit)return;
-  e.stopPropagation();
-  removeLink(hit.getAttribute("data-from"),hit.getAttribute("data-to"));
-});
 canvas.addEventListener("wheel",function(e){
   e.preventDefault();
   closeCtxMenu();
@@ -1909,13 +2249,17 @@ canvas.addEventListener("wheel",function(e){
   var mx=e.clientX-rect.left,my=e.clientY-rect.top;
   var ns=Math.min(2.5,Math.max(0.15,view.s*Math.exp(-e.deltaY*0.0015)));
   var k=ns/view.s;
-  view.x=mx-(mx-view.x)*k;view.y=my-(my-view.y)*k;view.s=ns;applyView();saveView();
+  view.x=mx-(mx-view.x)*k;view.y=my-(my-view.y)*k;view.s=ns;applyView();if(selLink||linkFrom)drawLinks();saveView();
 },{passive:false});
 document.addEventListener("keydown",function(e){
   if(e.key==="Escape"){
     closeCtxMenu();
+    if(document.getElementById("feedback")&&document.getElementById("feedback").classList.contains("on")){closeFeedback();return;}
     if(e.target===notesArea){notesArea.blur();closeNotes();return;}
-    exitLink();closeNotes();return;
+    if(linkFrom){setLinkFrom(null);return;}
+    if(selLink){selLink=null;drawLinks();return;}
+    if(linkMode){exitLink();return;}
+    closeNotes();return;
   }
   var isProxy=(e.target===imeProxy);
   if(e.target&&!isProxy&&(e.target.isContentEditable||e.target===notesArea||e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
@@ -1940,9 +2284,10 @@ document.addEventListener("keydown",function(e){
     if(e.key==="ArrowDown"&&sel){e.preventDefault();moveSibling(sel,1);return;}
     return;
   }
+  if((e.key==="Delete"||e.key==="Backspace")&&selLink){e.preventDefault();removeSelectedLink();return;}
   if(!sel)return;
   if(e.key===" "){e.preventDefault();toggle(sel);}
-  else if(e.key==="Tab"){e.preventDefault();addChild(sel);}
+  else if(e.key==="Tab"){e.preventDefault();addChild(sel,sel===rootId&&e.shiftKey?{side:"left"}:undefined);}
   else if(e.key==="Enter"){e.preventDefault();addSibling(sel);}
   else if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();del(sel);}
   else if(e.key==="F2"){e.preventDefault();startEdit(sel);}
@@ -1958,13 +2303,6 @@ document.getElementById("notesClose").onclick=closeNotes;
 /* ---------- 按钮 ---------- */
 var $=function(id){return document.getElementById(id);};
 $("bNew").onclick=newMap;
-$("bFiles").onclick=function(){
-  flushCheckpoint();
-  savedDoc=nodes.length?payload(true):savedDoc;
-  showStart();
-};
-$("bSave").onclick=manualSave;
-$("bHist").onclick=toggleHistory;
 $("bUndo").onclick=undo;
 $("bRedo").onclick=redo;
 $("sNew").onclick=newMap;
@@ -1975,6 +2313,43 @@ $("bDel").onclick=function(){if(sel)del(sel);else alert("先选一个节点");};
 $("bNote").onclick=openNotes;
 $("bTodo").onclick=cycleTodo;
 $("bLink").onclick=toggleLink;
+$("bExitLinkMode").onclick=exitLink;
+Array.prototype.forEach.call(document.querySelectorAll("#lbArrows button"),function(b){
+  b.onclick=function(){
+    var cur=getSelLinkObj();if(!cur)return;
+    pushUndo();cur.lnk.arrow=b.getAttribute("data-arrow")||"end";drawLinks();save();
+  };
+});
+$("lbDashed").onclick=function(){
+  var cur=getSelLinkObj();if(!cur)return;
+  pushUndo();cur.lnk.dashed=!cur.lnk.dashed;drawLinks();save();
+};
+$("lbColorPick").oninput=function(){
+  var cur=getSelLinkObj();if(!cur)return;
+  if(!this._pre)this._pre=takeSnap();
+  cur.lnk.color=this.value;drawLinks();
+};
+$("lbColorPick").onchange=function(){
+  if(this._pre){pushUndo(this._pre);this._pre=null;save();}
+};
+$("lbCurve").oninput=function(){
+  var cur=getSelLinkObj();if(!cur)return;
+  if(!this._pre)this._pre=takeSnap();
+  cur.lnk.perp=parseFloat(this.value)||0;drawLinks();
+};
+$("lbCurve").onchange=function(){
+  if(this._pre){pushUndo(this._pre);this._pre=null;save();}
+};
+$("lbStraight").onclick=function(){
+  var cur=getSelLinkObj();if(!cur)return;
+  pushUndo();cur.lnk.perp=0;cur.lnk.along=0;drawLinks();save();
+};
+$("lbResetPos").onclick=function(){
+  var cur=getSelLinkObj();if(!cur)return;
+  pushUndo();cur.lnk.fromAnchor=null;cur.lnk.toAnchor=null;drawLinks();save();
+};
+$("lbDelete").onclick=removeSelectedLink;
+$("lbClose").onclick=function(){selectLink(null,-1);};
 $("bRelayout").onclick=function(){pushUndo();layoutAll();render();paintSwatches();save();};
 $("bFit").onclick=fit;
 $("bZin").onclick=function(){zoomBy(1.2);};
@@ -1982,9 +2357,8 @@ $("bZout").onclick=function(){zoomBy(1/1.2);};
 function zoomBy(k){
   var cw=canvas.clientWidth/2,ch=canvas.clientHeight/2;
   var ns=Math.min(2.5,Math.max(0.15,view.s*k)),kk=ns/view.s;
-  view.x=cw-(cw-view.x)*kk;view.y=ch-(ch-view.y)*kk;view.s=ns;applyView();saveView();
+  view.x=cw-(cw-view.x)*kk;view.y=ch-(ch-view.y)*kk;view.s=ns;applyView();if(selLink||linkFrom)drawLinks();saveView();
 }
-document.getElementById("histClose").onclick=closeHistory;
 $("bExport").onclick=openExport;
 document.getElementById("exClose").onclick=closeExport;
 document.getElementById("export").onclick=function(e){ if(e.target===this)closeExport(); };
@@ -1992,19 +2366,34 @@ Array.prototype.forEach.call(document.querySelectorAll("#export .exlist button")
   b.onclick=function(){ doExport(b.getAttribute("data-fmt")); };
 });
 $("bImport").onclick=function(){$("fileIn").click();};
+$("bFeedback").onclick=openFeedback;
+$("fbClose").onclick=closeFeedback;
+$("feedback").onclick=function(e){if(e.target===this)closeFeedback();};
+Array.prototype.forEach.call(document.querySelectorAll("#fbTypes button"),function(b){
+  b.onclick=function(){
+    fbType=b.getAttribute("data-type");
+    Array.prototype.forEach.call(document.querySelectorAll("#fbTypes button"),function(x){x.classList.toggle("act",x===b);});
+  };
+});
+$("fbSubmit").onclick=function(){
+  var ta=$("fbText"),ct=$("fbContact");
+  var txt=(ta&&ta.value||"").trim();
+  if(!txt){alert("请填写您的意见或建议");if(ta)ta.focus();return;}
+  var arr=loadFeedbacks();
+  arr.push({id:Date.now()+"_"+Math.random().toString(36).slice(2,6),type:fbType,text:txt,contact:(ct&&ct.value||"").trim(),ts:Date.now()});
+  saveFeedbacks(arr);
+  if(ta)ta.value="";
+  if(ct)ct.value="";
+  renderFeedbacks();
+  toast("感谢您的建议！已保存在本机，可一键复制或导出");
+};
 $("bHelp").onclick=function(){$("help").classList.add("on");};
 $("bHelpClose").onclick=function(){$("help").classList.remove("on");};
 $("help").onclick=function(e){if(e.target===this)this.classList.remove("on");};
 
 window.addEventListener("pagehide",function(){flushCheckpoint();});
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden")flushCheckpoint();});
-window.addEventListener("beforeunload",function(e){
-  flushCheckpoint();
-  if(!suppressUnload&&dirty&&isInEditor()){
-    e.preventDefault();
-    e.returnValue="";
-  }
-});
+window.addEventListener("beforeunload",function(){flushCheckpoint();});
 setInterval(function(){if(dirty&&isInEditor())flushCheckpoint();},15000);
 
 init();
